@@ -6,18 +6,24 @@ import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.opengl.GLSurfaceView
+import android.os.Handler
+import android.os.Message
 import android.widget.Toast
+import com.live.longsiyang.openglonandroid.stlmodule.STLGLRender
 
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var glSurfaceView: GLSurfaceView
+    lateinit var glRenderer: STLGLRender
+    var rotateDegreen:Float = 0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (checkSupported()) {
             glSurfaceView = GLSurfaceView(this);
-            glSurfaceView.let { glSurfaceView.setRenderer(GLRender2())
+            glRenderer = STLGLRender(this)
+            glSurfaceView.let { glSurfaceView.setRenderer(glRenderer)
                 setContentView(glSurfaceView); }
 
         } else {
@@ -26,6 +32,20 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
+
+    fun rotate(degree:Float) {
+        glRenderer.rotate(degree);
+        glSurfaceView.invalidate();
+    }
+
+    private var handler :Handler =object : Handler(){     //此处的object 要加，否则无法重写 handlerMessage
+        override fun handleMessage(msg: Message?) {
+            super.handleMessage(msg)
+            rotate(rotateDegreen);
+
+        }
+    }
+
 
 
     @SuppressLint("ObsoleteSdkInt")
@@ -56,6 +76,22 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         glSurfaceView.let { glSurfaceView.onResume() }
+        Thread(Runnable {
+            kotlin.run {
+                while (true) {
+                    try {
+                        Thread.sleep(100);
+
+                        rotateDegreen += 5;
+                        handler.sendEmptyMessage(0x001);
+                    } catch (e:Exception) {
+                        e.printStackTrace();
+                    }
+
+                }
+
+            }
+        }).start()
     }
 
 }
