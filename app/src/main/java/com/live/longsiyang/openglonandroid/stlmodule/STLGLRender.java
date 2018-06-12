@@ -107,13 +107,50 @@ public class STLGLRender implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         gl.glEnable(GL10.GL_DEPTH_TEST); // 启用深度缓存
-        gl.glClearDepthf(1.0f); // 设置深度缓存值
+        gl.glClearColor(0f, 0f, 0f, 0f);// 设置深度缓存值
         gl.glDepthFunc(GL10.GL_LEQUAL); // 设置深度缓存比较函数
         gl.glShadeModel(GL10.GL_SMOOTH);// 设置阴影模式GL_SMOOTH
+
+        //开启光
+        openLight(gl);
+        enableMaterial(gl);
         float r = model.getR();
+
         //r是半径，不是直径，因此用0.5/r可以算出放缩比例
         mScalef = 0.5f / r;
         mCenterPoint = model.getCentrePoint();
+    }
+
+    float[] ambient = {0.9f, 0.9f, 0.9f, 1.0f};
+    float[] diffuse = {0.5f, 0.5f, 0.5f, 1.0f};
+    float[] specular = {1.0f, 1.0f, 1.0f, 1.0f};
+    float[] lightPosition = {0.5f, 0.5f, 0.5f, 0.0f};
+
+    private void openLight(GL10 gl) {
+
+        gl.glEnable(GL10.GL_LIGHTING);
+        gl.glEnable(GL10.GL_LIGHT0);
+        gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_AMBIENT, STLUtils.floatToBuffer(ambient));
+        gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_DIFFUSE, STLUtils.floatToBuffer(diffuse));
+        gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_SPECULAR, STLUtils.floatToBuffer(specular));
+        gl.glLightfv(GL10.GL_LIGHT0, GL10.GL_POSITION, STLUtils.floatToBuffer(lightPosition));
+
+
+    }
+
+    float[] materialAmb = {0.4f, 0.4f, 1.0f, 1.0f,};
+    float[] materialDiff = {0.0f, 0.0f, 1.0f, 1.0f,};
+    float[] materialSpec = {1.0f, 0.5f, 0.0f, 1.0f,};
+
+    public void enableMaterial(GL10 gl) {
+
+        //材料对环境光的反射情况
+        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_AMBIENT, STLUtils.floatToBuffer(materialAmb));
+        //散射光的反射情况
+        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_DIFFUSE, STLUtils.floatToBuffer(materialDiff));
+        //镜面光的反射情况
+        gl.glMaterialfv(GL10.GL_FRONT_AND_BACK, GL10.GL_SPECULAR, STLUtils.floatToBuffer(materialSpec));
+
     }
 
 
