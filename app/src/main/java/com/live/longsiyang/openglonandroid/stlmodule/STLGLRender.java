@@ -3,6 +3,7 @@ package com.live.longsiyang.openglonandroid.stlmodule;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLU;
+import android.opengl.GLUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -112,13 +113,30 @@ public class STLGLRender implements GLSurfaceView.Renderer {
         gl.glShadeModel(GL10.GL_SMOOTH);// 设置阴影模式GL_SMOOTH
 
         //开启光
-        openLight(gl);
-        enableMaterial(gl);
+//        openLight(gl);
+//        enableMaterial(gl);
         float r = model.getR();
 
         //r是半径，不是直径，因此用0.5/r可以算出放缩比例
         mScalef = 0.5f / r;
         mCenterPoint = model.getCentrePoint();
+
+//        int[] textures = new int[1];
+//        gl.glGenTextures(1, textures, 0);
+//
+//        // 将生成的空纹理绑定到当前2D纹理通道
+//        gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
+//
+//        // 设置2D纹理通道当前绑定的纹理的属性
+//        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER,
+//                GL10.GL_NEAREST);
+//        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER,
+//                GL10.GL_LINEAR);
+//
+//        // 将bitmap应用到2D纹理通道当前绑定的纹理中
+//        GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
+//        //关闭当前模型贴纹理，即将纹理id设置为0
+//        gl.glBindTexture(GL10.GL_TEXTURE_2D, 0);
     }
 
     float[] ambient = {0.9f, 0.9f, 0.9f, 1.0f};

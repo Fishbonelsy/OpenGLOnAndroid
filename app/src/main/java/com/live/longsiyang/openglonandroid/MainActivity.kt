@@ -2,28 +2,36 @@ package com.live.longsiyang.openglonandroid
 
 import android.annotation.SuppressLint
 import android.app.ActivityManager
-import android.os.Build
-import android.support.v7.app.AppCompatActivity
-import android.os.Bundle
 import android.opengl.GLSurfaceView
+import android.opengl.GLSurfaceView.RENDERMODE_WHEN_DIRTY
+import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Message
+import android.support.v7.app.AppCompatActivity
 import android.widget.Toast
-import com.live.longsiyang.openglonandroid.stlmodule.STLGLRender
+import android.graphics.BitmapFactory
+
+
 
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var glSurfaceView: GLSurfaceView
-    lateinit var glRenderer: STLGLRender
+    lateinit var glRenderer: BitmapGLRender
     var rotateDegreen:Float = 0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (checkSupported()) {
+            glRenderer = BitmapGLRender(this)
+            glRenderer.setImageBitmap(BitmapFactory.decodeResource(resources, R.drawable.aaa))
+            //glRenderer.setCurrentEffect(R.id.none)
             glSurfaceView = GLSurfaceView(this);
-            glRenderer = STLGLRender(this)
-            glSurfaceView.let { glSurfaceView.setRenderer(glRenderer)
+            glSurfaceView.let {
+                glSurfaceView.setEGLContextClientVersion(2);
+                glSurfaceView.setRenderer(glRenderer)
+                glSurfaceView.setRenderMode(RENDERMODE_WHEN_DIRTY)
                 setContentView(glSurfaceView); }
 
         } else {
@@ -34,7 +42,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun rotate(degree:Float) {
-        glRenderer.rotate(degree);
+        //glRenderer.rotate(degree);
         glSurfaceView.invalidate();
     }
 
@@ -75,23 +83,24 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        glSurfaceView.let { glSurfaceView.onResume() }
-        Thread(Runnable {
-            kotlin.run {
-                while (true) {
-                    try {
-                        Thread.sleep(100);
-
-                        rotateDegreen += 5;
-                        handler.sendEmptyMessage(0x001);
-                    } catch (e:Exception) {
-                        e.printStackTrace();
-                    }
-
-                }
-
-            }
-        }).start()
+//        glSurfaceView.let { glSurfaceView.onResume() }
+//        Thread(Runnable {
+//            kotlin.run {
+//                while (true) {
+//                    try {
+//                        Thread.sleep(100);
+//
+//                        rotateDegreen += 5;
+//                        handler.sendEmptyMessage(0x001);
+//                    } catch (e:Exception) {
+//                        e.printStackTrace();
+//                    }
+//
+//                }
+//
+//            }
+//        }).start()
     }
 
 }
+
