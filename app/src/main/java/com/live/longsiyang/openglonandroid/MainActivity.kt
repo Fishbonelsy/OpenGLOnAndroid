@@ -18,15 +18,16 @@ import android.graphics.BitmapFactory
 class MainActivity : AppCompatActivity() {
 
     lateinit var glSurfaceView: GLSurfaceView
-    lateinit var glRenderer: BitmapGLRender
+    lateinit var glRenderer: ColorGLRender
     var rotateDegreen:Float = 0f
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (checkSupported()) {
-            glRenderer = BitmapGLRender(this)
-            glRenderer.setImageBitmap(BitmapFactory.decodeResource(resources, R.drawable.aaa))
-            //glRenderer.setCurrentEffect(R.id.none)
+            glRenderer = ColorGLRender(this)
+//            glRenderer.setImageBitmap(BitmapFactory.decodeResource(resources, R.drawable.aaa))
+            glRenderer.setTexture(200,200)
+//            glRenderer.setCurrentEffect(R.id.none)
             glSurfaceView = GLSurfaceView(this);
             glSurfaceView.let {
                 glSurfaceView.setEGLContextClientVersion(2);
