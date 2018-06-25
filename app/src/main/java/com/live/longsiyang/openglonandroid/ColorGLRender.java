@@ -22,7 +22,6 @@ public class ColorGLRender implements GLSurfaceView.Renderer  {
     private int mProgram;
     private int mPosCoordHandle;
 
-    private FloatBuffer mTexVertices;
     private FloatBuffer mPosVertices;
 
     private int mViewWidth;
@@ -73,14 +72,10 @@ public class ColorGLRender implements GLSurfaceView.Renderer  {
         // Create program
         mProgram = GLToolbox.createProgram(VERTEX_SHADER, FRAGMENT_SHADER);
 
-        // Bind attributes and uniforms
+        // Bind attributes
         mPosCoordHandle = GLES20.glGetAttribLocation(mProgram, "a_position");
 
         // Setup coordinate buffers
-        mTexVertices = ByteBuffer.allocateDirect(
-                TEX_VERTICES.length * FLOAT_SIZE_BYTES)
-                .order(ByteOrder.nativeOrder()).asFloatBuffer();
-        mTexVertices.put(TEX_VERTICES).position(0);
         mPosVertices = ByteBuffer.allocateDirect(
                 POS_VERTICES.length * FLOAT_SIZE_BYTES)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -94,7 +89,14 @@ public class ColorGLRender implements GLSurfaceView.Renderer  {
     public void updateTextureSize(int texWidth, int texHeight) {
         mTexWidth = texWidth;
         mTexHeight = texHeight;
-        computeOutputVertices();
+        float x0, y0, x1, y1;
+        x0 = -texWidth/(float)(mViewWidth)/2;
+        x1 = texWidth/(float)(mViewWidth)/2;
+        y0 = -texHeight/(float)(mViewHeight)/2;
+        y1 = texHeight/(float)(mViewHeight)/2;
+        float[] coords = new float[] { x0, y0, x1, y0, x0, y1, x1, y1 };
+        mPosVertices.put(coords).position(0);
+        //computeOutputVertices();
     }
 
     public void updateViewSize(int viewWidth, int viewHeight) {
@@ -155,7 +157,6 @@ public class ColorGLRender implements GLSurfaceView.Renderer  {
 
             @Override
             public void run() {
-                // TODO Auto-generated method stub
                 loadTexture(width, height);
             }
         });
@@ -163,16 +164,12 @@ public class ColorGLRender implements GLSurfaceView.Renderer  {
 
     private void loadTexture(int width, int height){
         GLES20.glGenTextures(2, mTextures , 0);
-        updateTextureSize(width,height);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextures[0]);
-
         GLToolbox.initTexParams();
     }
 
     private void renderResult() {
-
-            renderTexture(mTextures[0]);
-
+        renderTexture(mTextures[0]);
     }
 
     @Override

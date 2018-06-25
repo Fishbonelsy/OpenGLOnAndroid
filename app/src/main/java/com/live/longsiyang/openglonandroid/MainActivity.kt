@@ -2,59 +2,58 @@ package com.live.longsiyang.openglonandroid
 
 import android.annotation.SuppressLint
 import android.app.ActivityManager
-import android.opengl.GLSurfaceView
+import android.graphics.BitmapFactory
 import android.opengl.GLSurfaceView.RENDERMODE_WHEN_DIRTY
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Message
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.OrientationHelper
+import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.StaggeredGridLayoutManager
 import android.widget.Toast
-import android.graphics.BitmapFactory
-
-
+import com.live.longsiyang.openglonandroid.effects.adapter.EffectListAdapter
+import com.live.longsiyang.openglonandroid.effects.data.EffectDataManager
+import com.live.longsiyang.openglonandroid.effects.data.LocalEffect
+import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var glSurfaceView: GLSurfaceView
-    lateinit var glRenderer: ColorGLRender
-    var rotateDegreen:Float = 0f
+    lateinit var glRenderer: BitmapGLRender
+    // bottom layout
+    lateinit var effectList:List<LocalEffect>
+    lateinit var effectAdapter:EffectListAdapter
+    lateinit var layoutManager: RecyclerView.LayoutManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main);
         if (checkSupported()) {
-            glRenderer = ColorGLRender(this)
-//            glRenderer.setImageBitmap(BitmapFactory.decodeResource(resources, R.drawable.aaa))
-            glRenderer.setTexture(200,200)
+            glRenderer = BitmapGLRender(this)
+            glRenderer.setImageBitmap(BitmapFactory.decodeResource(resources, R.drawable.aaa))
 //            glRenderer.setCurrentEffect(R.id.none)
-            glSurfaceView = GLSurfaceView(this);
-            glSurfaceView.let {
-                glSurfaceView.setEGLContextClientVersion(2);
-                glSurfaceView.setRenderer(glRenderer)
-                glSurfaceView.setRenderMode(RENDERMODE_WHEN_DIRTY)
-                setContentView(glSurfaceView); }
-
+            glsv_effect_preview.setEGLContextClientVersion(2);
+            glsv_effect_preview.setRenderer(glRenderer)
+            glsv_effect_preview.setRenderMode(RENDERMODE_WHEN_DIRTY)
+            initEffectList()
         } else {
-            setContentView(R.layout.activity_main);
+
             Toast.makeText(this, "当前设备不支持OpenGL ES 2.0!", Toast.LENGTH_SHORT).show();
         }
 
+
     }
 
-    fun rotate(degree:Float) {
-        //glRenderer.rotate(degree);
-        glSurfaceView.invalidate();
+
+    fun initEffectList(){
+        effectList = EffectDataManager.getLocalEffectList(this , "effect_list.json")
+        effectAdapter = EffectListAdapter(this , effectList)
+        layoutManager = StaggeredGridLayoutManager(1 , OrientationHelper.HORIZONTAL)
+        rv_effect_list.layoutManager = layoutManager
+        rv_effect_list.adapter = effectAdapter
+
+
     }
-
-    private var handler :Handler =object : Handler(){     //此处的object 要加，否则无法重写 handlerMessage
-        override fun handleMessage(msg: Message?) {
-            super.handleMessage(msg)
-            rotate(rotateDegreen);
-
-        }
-    }
-
 
 
     @SuppressLint("ObsoleteSdkInt")
@@ -75,32 +74,6 @@ class MainActivity : AppCompatActivity() {
 
         return supportsEs2
 
-    }
-
-    override fun onPause() {
-        super.onPause()
-        glSurfaceView.let { glSurfaceView.onPause() }
-    }
-
-    override fun onResume() {
-        super.onResume()
-//        glSurfaceView.let { glSurfaceView.onResume() }
-//        Thread(Runnable {
-//            kotlin.run {
-//                while (true) {
-//                    try {
-//                        Thread.sleep(100);
-//
-//                        rotateDegreen += 5;
-//                        handler.sendEmptyMessage(0x001);
-//                    } catch (e:Exception) {
-//                        e.printStackTrace();
-//                    }
-//
-//                }
-//
-//            }
-//        }).start()
     }
 
 }

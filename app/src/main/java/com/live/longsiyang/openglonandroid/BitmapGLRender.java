@@ -55,7 +55,7 @@ public class BitmapGLRender implements GLSurfaceView.Renderer  {
                         "varying vec2 v_texcoord;\n" +
                         "void main() {\n" +
                         //"  gl_Position = a_position;\n" +
-                        "  gl_Position = vec4(a_position.x,-a_position.y,a_position.z, a_position.w);\n" +
+                        "  gl_Position = vec4(a_position.x,a_position.y,a_position.z, a_position.w);\n" +
                         "  v_texcoord = a_texcoord;\n" +
                         "}\n";
 
