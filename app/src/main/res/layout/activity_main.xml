@@ -18,6 +18,7 @@
         android:background="#ffffff"
         android:orientation="vertical">
         <SeekBar
+            android:id="@+id/sb_effect_value"
             android:layout_width="match_parent"
             android:layout_height="60dp"
 

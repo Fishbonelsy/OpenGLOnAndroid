@@ -10,6 +10,8 @@ import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
 import android.util.Log;
 
+import com.live.longsiyang.openglonandroid.utils.LogUtils;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -45,6 +47,7 @@ public class BitmapGLRender implements GLSurfaceView.Renderer  {
         int mCurrentEffect;
         private EffectContext mEffectContext;
         private Effect mEffect;
+        private float mEffectValue = 0.0f;
         private int mImageWidth;
         private int mImageHeight;
         private boolean initialized = false;
@@ -180,7 +183,8 @@ public class BitmapGLRender implements GLSurfaceView.Renderer  {
              * Initialize the correct effect based on the selected menu/action item
              */
             mEffect = effectFactory.createEffect(EffectFactory.EFFECT_BRIGHTNESS);
-            mEffect.setParameter("brightness", 0.5f);
+            LogUtils.Companion.w("effect value : " + mEffectValue);
+            mEffect.setParameter("brightness", mEffectValue);
 
         }
 
@@ -188,6 +192,9 @@ public class BitmapGLRender implements GLSurfaceView.Renderer  {
             mCurrentEffect = effect;
         }
 
+        public void setEffectValue(float value){
+            mEffectValue = value;
+        }
 
         public void setImageBitmap(final Bitmap bmp){
             runOnDraw(new Runnable() {
