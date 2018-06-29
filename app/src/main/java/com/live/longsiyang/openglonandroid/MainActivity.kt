@@ -2,7 +2,6 @@ package com.live.longsiyang.openglonandroid
 
 import android.annotation.SuppressLint
 import android.app.ActivityManager
-import android.graphics.BitmapFactory
 import android.opengl.GLSurfaceView.*
 import android.os.Build
 import android.os.Bundle
@@ -20,7 +19,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var glRenderer: MixBitmapGLRender
+    lateinit var glRenderer: AbsGLRender
     // bottom layout
     lateinit var effectList:List<LocalEffect>
     lateinit var effectAdapter:EffectListAdapter
@@ -30,9 +29,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main);
         if (checkSupported()) {
-            glRenderer = MixBitmapGLRender(this)
-//            glRenderer.setImageBitmap(BitmapFactory.decodeResource(resources, R.drawable.aaa))
-//            glRenderer.setCurrentEffect(R.id.none)
+            glRenderer = BitmapEffectGLRender(this)
             glsv_effect_preview.setEGLContextClientVersion(2);
             glsv_effect_preview.setRenderer(glRenderer)
             glsv_effect_preview.setRenderMode(RENDERMODE_WHEN_DIRTY)
@@ -61,7 +58,7 @@ class MainActivity : AppCompatActivity() {
         sb_effect_value.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val value = progress / 50.0f
-//                glRenderer.setEffectValue(value)
+                glRenderer.setParams(value)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
