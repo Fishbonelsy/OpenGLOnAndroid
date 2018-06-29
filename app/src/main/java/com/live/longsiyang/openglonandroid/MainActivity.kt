@@ -20,7 +20,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var glRenderer: BitmapGLRender
+    lateinit var glRenderer: MixBitmapGLRender
     // bottom layout
     lateinit var effectList:List<LocalEffect>
     lateinit var effectAdapter:EffectListAdapter
@@ -30,8 +30,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main);
         if (checkSupported()) {
-            glRenderer = BitmapGLRender(this)
-            glRenderer.setImageBitmap(BitmapFactory.decodeResource(resources, R.drawable.aaa))
+            glRenderer = MixBitmapGLRender(this)
+//            glRenderer.setImageBitmap(BitmapFactory.decodeResource(resources, R.drawable.aaa))
 //            glRenderer.setCurrentEffect(R.id.none)
             glsv_effect_preview.setEGLContextClientVersion(2);
             glsv_effect_preview.setRenderer(glRenderer)
@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
         sb_effect_value.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val value = progress / 50.0f
-                glRenderer.setEffectValue(value)
+//                glRenderer.setEffectValue(value)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
