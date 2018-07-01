@@ -8,5 +8,7 @@ import android.opengl.GLSurfaceView;
 
 public interface AbsGLRender extends GLSurfaceView.Renderer {
 
+
+    void setEffect(String effectName, String paramsName);
     void setParams(float value);
 }

@@ -9,11 +9,13 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.OrientationHelper
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.StaggeredGridLayoutManager
+import android.view.View
 import android.widget.SeekBar
 import android.widget.Toast
 import com.live.longsiyang.openglonandroid.effects.adapter.EffectListAdapter
 import com.live.longsiyang.openglonandroid.effects.data.EffectDataManager
 import com.live.longsiyang.openglonandroid.effects.data.LocalEffect
+import com.live.longsiyang.openglonandroid.utils.ToastUtils
 import kotlinx.android.synthetic.main.activity_main.*
 
 
@@ -49,10 +51,19 @@ class MainActivity : AppCompatActivity() {
         effectAdapter = EffectListAdapter(this , effectList)
         layoutManager = StaggeredGridLayoutManager(1 , OrientationHelper.HORIZONTAL)
         rv_effect_list.layoutManager = layoutManager
+        effectAdapter.setOnItemClickListener(object :EffectListAdapter.OnItemClickListener{
+            override fun onItemClick(v: View, i: Int, effect: LocalEffect) {
+                ToastUtils.toast(""+effect.name)
+                glRenderer.setEffect(effect.name,effect.param)
+            }
+
+        })
         rv_effect_list.adapter = effectAdapter
 
 
+
     }
+
 
     fun initSeekBar(){
         sb_effect_value.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {

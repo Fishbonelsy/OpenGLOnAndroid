@@ -48,6 +48,8 @@ public class BitmapEffectGLRender implements AbsGLRender  {
     int mCurrentEffect;
     private EffectContext mEffectContext;
     private Effect mEffect;
+    private String mEffectName;
+    private String mEffectParams;
     private float mEffectValue = 0.0f;
     private int mImageWidth;
     private int mImageHeight;
@@ -177,26 +179,26 @@ public class BitmapEffectGLRender implements AbsGLRender  {
     }
 
     private void initEffect() {
-        EffectFactory effectFactory = mEffectContext.getFactory();
+
         if (mEffect != null) {
             mEffect.release();
+
         }
-        /**
-         * Initialize the correct effect based on the selected menu/action item
-         */
-        mEffect = effectFactory.createEffect(EffectFactory.EFFECT_BRIGHTNESS);
+        EffectFactory effectFactory = mEffectContext.getFactory();
+        if (mEffectName == null||mEffectParams == null){
+            mEffect = effectFactory.createEffect(EffectFactory.EFFECT_BRIGHTNESS);
+            mEffect.setParameter("brightness" , 0.5f);
+        }else {
+            mEffect = effectFactory.createEffect(mEffectName);
+            mEffect.setParameter(mEffectParams , mEffectValue);
+        }
         LogUtils.Companion.w("effect value : " + mEffectValue);
-        mEffect.setParameter("brightness", mEffectValue);
+
+
+
 
     }
 
-    public void setCurrentEffect(int effect) {
-        mCurrentEffect = effect;
-    }
-
-    private void setEffectValue(float value){
-        mEffectValue = value;
-    }
 
     private void setImageBitmap(){
         runOnDraw(new Runnable() {
@@ -224,9 +226,8 @@ public class BitmapEffectGLRender implements AbsGLRender  {
     }
 
     private void applyEffect() {
-        if(mEffect == null){
-            Log.i("info","apply Effect null mEffect");
-        }
+        Log.i("info","apply Effect:"+mEffect);
+
 
         mEffect.apply(mTextures[0], mImageWidth, mImageHeight, mTextures[1]);
     }
@@ -276,7 +277,13 @@ public class BitmapEffectGLRender implements AbsGLRender  {
     }
 
     @Override
+    public void setEffect(String effectName, String paramsName) {
+        mEffectName = effectName;
+        mEffectParams = paramsName;
+    }
+
+    @Override
     public void setParams(float value) {
-        setEffectValue(value);
+        mEffectValue = value;
     }
 }

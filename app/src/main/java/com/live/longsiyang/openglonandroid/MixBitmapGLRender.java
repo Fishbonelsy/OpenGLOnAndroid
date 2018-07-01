@@ -249,6 +249,12 @@ public class MixBitmapGLRender implements AbsGLRender  {
         }
     }
 
+
+    @Override
+    public void setEffect(String effectName, String paramsName) {
+
+    }
+
     @Override
     public void setParams(float value) {
         mixValue = value;

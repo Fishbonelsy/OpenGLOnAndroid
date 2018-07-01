@@ -1,12 +1,12 @@
 [
   {
     "id": "1",
-    "name": "fisheye",
-    "param": "scale"
+    "name": "android.media.effect.effects.BrightnessEffect",
+    "param": "brightness"
   },
   {
     "id": "2",
-    "name": "birghtness",
-    "param": "birghtness"
+    "name": "android.media.effect.effects.FisheyeEffect",
+    "param": "scale"
   }
 ]

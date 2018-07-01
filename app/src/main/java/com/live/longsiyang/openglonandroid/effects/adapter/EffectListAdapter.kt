@@ -18,6 +18,11 @@ open class EffectListAdapter : RecyclerView.Adapter<EffectListAdapter.EffectView
 
     var context: Context
     var dataList: List<LocalEffect>
+    var itemListener: OnItemClickListener? = null;
+
+    open interface OnItemClickListener{
+        fun onItemClick(v:View , i:Int ,effect: LocalEffect);
+    }
 
     constructor(context:Context , dataList:List<LocalEffect>){
 
@@ -26,8 +31,12 @@ open class EffectListAdapter : RecyclerView.Adapter<EffectListAdapter.EffectView
 
     }
 
+    fun setOnItemClickListener(listener:OnItemClickListener){
+        itemListener = listener
+    }
+
     override fun onBindViewHolder(holder: EffectViewHolder?, position: Int) {
-        holder?.bindData(dataList.get(position) , position)
+        holder?.bindData(dataList.get(position) , position , itemListener)
     }
 
     override fun getItemCount(): Int {
@@ -43,12 +52,16 @@ open class EffectListAdapter : RecyclerView.Adapter<EffectListAdapter.EffectView
 
 
 
-    class EffectViewHolder(itemView: View?) : RecyclerView.ViewHolder(itemView) {
+    class EffectViewHolder(itemView: View? ) : RecyclerView.ViewHolder(itemView) {
 
 
-        fun bindData(effect:LocalEffect , position:Int){
+        fun bindData(effect:LocalEffect , position:Int,listener: OnItemClickListener?){
+
             itemView.btn_effect_item.setText(effect.name)
-            itemView.btn_effect_item.setOnClickListener { ToastUtils.toast(effect.name) }
+            itemView.btn_effect_item.setOnClickListener {
+
+                listener?.onItemClick(itemView , position,effect)
+            }
         }
     }
 }
