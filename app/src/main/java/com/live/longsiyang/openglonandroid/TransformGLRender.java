@@ -26,9 +26,11 @@ public class TransformGLRender implements AbsGLRender  {
     private int mTexSamplerHandle2;
     private int mTexCoordHandle;
     private int mPosCoordHandle;
+    private int mTransformHandle;
 
     private FloatBuffer mTexVertices;
     private FloatBuffer mPosVertices;
+    private FloatBuffer mTransVertices;
 
     private int mViewWidth;
     private int mViewHeight;
@@ -44,11 +46,12 @@ public class TransformGLRender implements AbsGLRender  {
 
     private static final String VERTEX_SHADER =
             "attribute vec4 a_position;\n" +
+                    "uniform mat4 a_transform_matrix;\n" +
                     "attribute vec2 a_texcoord;\n" +
                     "varying vec2 v_texcoord;\n" +
                     "void main() {\n" +
-                    //"  gl_Position = a_position;\n" +
-                    "  gl_Position = vec4(a_position.x,a_position.y,a_position.z, a_position.w);\n" +
+//                    "  gl_Position = a_position;\n" +
+                    "  gl_Position = a_transform_matrix * a_position;\n"+// + 0 *vec4(a_position.x,a_position.y,a_position.z, a_position.w) ;\n" +
                     "  v_texcoord = a_texcoord;\n" +
                     "}\n";
 
@@ -58,7 +61,7 @@ public class TransformGLRender implements AbsGLRender  {
                     "uniform sampler2D tex_sampler2;\n" +
                     "varying vec2 v_texcoord;\n" +
                     "void main() {\n" +
-                    "  gl_FragColor = mix(texture2D(tex_sampler, v_texcoord) ,texture2D(tex_sampler2, v_texcoord),0.2);\n" +
+                    "  gl_FragColor = mix(texture2D(tex_sampler, v_texcoord) ,texture2D(tex_sampler2, v_texcoord),0.5);\n" +
                     "}\n";
 
     private static final float[] TEX_VERTICES = {
@@ -67,6 +70,13 @@ public class TransformGLRender implements AbsGLRender  {
 
     private static final float[] POS_VERTICES = {
             -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f
+    };
+
+    private static final float[] TRANS_VERTICES = {
+            0.6f, 0, 0, 0,
+            0, 0.6f, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
     };
 
     private static final int FLOAT_SIZE_BYTES = 4;
@@ -88,6 +98,7 @@ public class TransformGLRender implements AbsGLRender  {
         mTexSamplerHandle2 = GLES20.glGetUniformLocation(mProgram , "tex_sampler2");
         mTexCoordHandle = GLES20.glGetAttribLocation(mProgram, "a_texcoord");
         mPosCoordHandle = GLES20.glGetAttribLocation(mProgram, "a_position");
+        mTransformHandle = GLES20.glGetUniformLocation(mProgram , "a_transform_matrix");
 
         // Setup coordinate buffers
         mTexVertices = ByteBuffer.allocateDirect(
@@ -98,6 +109,10 @@ public class TransformGLRender implements AbsGLRender  {
                 POS_VERTICES.length * FLOAT_SIZE_BYTES)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         mPosVertices.put(POS_VERTICES).position(0);
+        mTransVertices = ByteBuffer.allocateDirect(
+                TRANS_VERTICES.length*FLOAT_SIZE_BYTES)
+                .order(ByteOrder.nativeOrder()).asFloatBuffer();
+        mTransVertices.put(TRANS_VERTICES).position(0);
     }
 
     public void tearDown() {
@@ -131,7 +146,9 @@ public class TransformGLRender implements AbsGLRender  {
         GLES20.glVertexAttribPointer(mPosCoordHandle, 2, GLES20.GL_FLOAT, false,
                 0, mPosVertices);
         GLES20.glEnableVertexAttribArray(mPosCoordHandle);
+        GLES20.glUniformMatrix4fv(mTransformHandle , 1  , false , mTransVertices);
         GLToolbox.checkGlError("vertex attribute setup");
+
         for (int i = 0 ; i < texIds.length ; i++){
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0+i);
             GLToolbox.checkGlError("glActiveTexture tex : " + i);
