@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
-import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -17,10 +16,10 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
- * Created by oceanlong on 2018/6/29.
+ * Created by oceanlong on 2018/7/3.
  */
 
-public class MixBitmapGLRender implements AbsGLRender  {
+public class TransformGLRender implements AbsGLRender  {
 
     private int mProgram;
     private int mTexSamplerHandle;
@@ -42,8 +41,6 @@ public class MixBitmapGLRender implements AbsGLRender  {
     private int[] mTextures = new int[2];
     private boolean initialized = false;
 
-    private int mixValueHandle;
-    private float mixValue = 0;
 
     private static final String VERTEX_SHADER =
             "attribute vec4 a_position;\n" +
@@ -59,10 +56,9 @@ public class MixBitmapGLRender implements AbsGLRender  {
             "precision mediump float;\n" +
                     "uniform sampler2D tex_sampler;\n" +
                     "uniform sampler2D tex_sampler2;\n" +
-                    "uniform float mix_value;\n" +
                     "varying vec2 v_texcoord;\n" +
                     "void main() {\n" +
-                    "  gl_FragColor = mix(texture2D(tex_sampler, v_texcoord) ,texture2D(tex_sampler2, v_texcoord),mix_value);\n" +
+                    "  gl_FragColor = mix(texture2D(tex_sampler, v_texcoord) ,texture2D(tex_sampler2, v_texcoord),0.2);\n" +
                     "}\n";
 
     private static final float[] TEX_VERTICES = {
@@ -75,8 +71,7 @@ public class MixBitmapGLRender implements AbsGLRender  {
 
     private static final int FLOAT_SIZE_BYTES = 4;
 
-    public MixBitmapGLRender(Context context) {
-        // TODO Auto-generated constructor stub
+    public TransformGLRender(Context context) {
         mContext = context;
         mRunOnDraw = new LinkedList<>();
         setImageBitmap();
@@ -93,7 +88,6 @@ public class MixBitmapGLRender implements AbsGLRender  {
         mTexSamplerHandle2 = GLES20.glGetUniformLocation(mProgram , "tex_sampler2");
         mTexCoordHandle = GLES20.glGetAttribLocation(mProgram, "a_texcoord");
         mPosCoordHandle = GLES20.glGetAttribLocation(mProgram, "a_position");
-        mixValueHandle = GLES20.glGetUniformLocation(mProgram , "mix_value");
 
         // Setup coordinate buffers
         mTexVertices = ByteBuffer.allocateDirect(
@@ -131,20 +125,13 @@ public class MixBitmapGLRender implements AbsGLRender  {
 
         GLES20.glDisable(GLES20.GL_BLEND);
 
-
-
         GLES20.glVertexAttribPointer(mTexCoordHandle, 2, GLES20.GL_FLOAT, false,
                 0, mTexVertices);
         GLES20.glEnableVertexAttribArray(mTexCoordHandle);
-
-
         GLES20.glVertexAttribPointer(mPosCoordHandle, 2, GLES20.GL_FLOAT, false,
                 0, mPosVertices);
         GLES20.glEnableVertexAttribArray(mPosCoordHandle);
         GLToolbox.checkGlError("vertex attribute setup");
-        GLES20.glUniform1f(mixValueHandle , mixValue);
-        GLToolbox.checkGlError("vertex attribute mixValueHandle setup");
-        Log.d("tag" , "MixBitmapGLRender mixvalue : " + mixValue);
         for (int i = 0 ; i < texIds.length ; i++){
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0+i);
             GLToolbox.checkGlError("glActiveTexture tex : " + i);
@@ -261,6 +248,6 @@ public class MixBitmapGLRender implements AbsGLRender  {
 
     @Override
     public void setParams(float value) {
-        mixValue = value;
+
     }
 }

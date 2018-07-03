@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main);
         if (checkSupported()) {
-            glRenderer = BitmapEffectGLRender(this)
+            glRenderer = MixBitmapGLRender(this)
             glsv_effect_preview.setEGLContextClientVersion(2);
             glsv_effect_preview.setRenderer(glRenderer)
             glsv_effect_preview.setRenderMode(RENDERMODE_WHEN_DIRTY)
