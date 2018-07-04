@@ -261,7 +261,7 @@ public class TransformGLRender implements AbsGLRender  {
         float size = (float) Math.cos(progressValue);
         float rotate = (float) Math.sin(progressValue);
         float[] TRANS_VERTICES = {
-                size, rotate, 0, 0,
+                size, -rotate, 0, 0,
                 rotate, size, 0, 0,
                 0, 0, 1, 0,
                 0, 0, 0, 1
