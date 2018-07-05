@@ -1,12 +1,10 @@
-package com.live.longsiyang.openglonandroid.stlmodule;
+package com.live.longsiyang.openglonandroid.glrender.stlmodule;
 
 /**
  * Created by oceanlong on 2018/6/11.
  */
 
 
-
-import android.content.Context;
 
 import java.io.IOException;
 import java.io.InputStream;

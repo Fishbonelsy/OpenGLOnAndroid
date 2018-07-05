@@ -15,6 +15,9 @@ import android.widget.Toast
 import com.live.longsiyang.openglonandroid.effects.adapter.EffectListAdapter
 import com.live.longsiyang.openglonandroid.effects.data.EffectDataManager
 import com.live.longsiyang.openglonandroid.effects.data.LocalEffect
+import com.live.longsiyang.openglonandroid.glrender.AbsGLRender
+import com.live.longsiyang.openglonandroid.glrender.BitmapEffectGLRender
+import com.live.longsiyang.openglonandroid.glrender.MultipleBitmapGLRender
 import com.live.longsiyang.openglonandroid.utils.ToastUtils
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -31,7 +34,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main);
         if (checkSupported()) {
-            glRenderer = MultipleBitmapGLRender(this)
+            glRenderer = BitmapEffectGLRender(this)
             glsv_effect_preview.setEGLContextClientVersion(2);
             glsv_effect_preview.setRenderer(glRenderer)
             glsv_effect_preview.setRenderMode(RENDERMODE_WHEN_DIRTY)
@@ -68,7 +71,7 @@ class MainActivity : AppCompatActivity() {
     fun initSeekBar(){
         sb_effect_value.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val value = progress / 50.0f
+                val value = progress / 100.0f
                 glRenderer.setParams(value)
             }
 

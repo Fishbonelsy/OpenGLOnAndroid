@@ -1,4 +1,4 @@
-package com.live.longsiyang.openglonandroid;
+package com.live.longsiyang.openglonandroid.glrender;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -6,7 +6,9 @@ import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
-import java.nio.Buffer;
+import com.live.longsiyang.openglonandroid.glrender.glutils.GLToolbox;
+import com.live.longsiyang.openglonandroid.R;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -20,7 +22,7 @@ import javax.microedition.khronos.opengles.GL10;
  * Created by oceanlong on 2018/7/3.
  */
 
-public class TransformGLRender implements AbsGLRender  {
+public class TransformGLRender implements AbsGLRender {
 
     private int mProgram;
     private int mTexSamplerHandle;

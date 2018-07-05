@@ -1,17 +1,14 @@
-package com.live.longsiyang.openglonandroid;
+package com.live.longsiyang.openglonandroid.glrender;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.effect.Effect;
-import android.media.effect.EffectContext;
-import android.media.effect.EffectFactory;
 import android.opengl.GLES20;
-import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
 import android.util.Log;
 
-import com.live.longsiyang.openglonandroid.utils.LogUtils;
+import com.live.longsiyang.openglonandroid.glrender.glutils.GLToolbox;
+import com.live.longsiyang.openglonandroid.R;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -23,13 +20,14 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
- * Created by oceanlong on 2018/6/13.
+ * Created by oceanlong on 2018/6/29.
  */
 
-public class BitmapEffectGLRender implements AbsGLRender  {
+public class MixBitmapGLRender implements AbsGLRender {
 
     private int mProgram;
     private int mTexSamplerHandle;
+    private int mTexSamplerHandle2;
     private int mTexCoordHandle;
     private int mPosCoordHandle;
 
@@ -45,15 +43,10 @@ public class BitmapEffectGLRender implements AbsGLRender  {
     private Context mContext;
     private final Queue<Runnable> mRunOnDraw;
     private int[] mTextures = new int[2];
-    int mCurrentEffect;
-    private EffectContext mEffectContext;
-    private Effect mEffect;
-    private String mEffectName;
-    private String mEffectParams;
-    private float mEffectValue = 0.0f;
-    private int mImageWidth;
-    private int mImageHeight;
     private boolean initialized = false;
+
+    private int mixValueHandle;
+    private float mixValue = 0;
 
     private static final String VERTEX_SHADER =
             "attribute vec4 a_position;\n" +
@@ -68,9 +61,11 @@ public class BitmapEffectGLRender implements AbsGLRender  {
     private static final String FRAGMENT_SHADER =
             "precision mediump float;\n" +
                     "uniform sampler2D tex_sampler;\n" +
+                    "uniform sampler2D tex_sampler2;\n" +
+                    "uniform float mix_value;\n" +
                     "varying vec2 v_texcoord;\n" +
                     "void main() {\n" +
-                    "  gl_FragColor = texture2D(tex_sampler, v_texcoord);\n" +
+                    "  gl_FragColor = mix(texture2D(tex_sampler, v_texcoord) ,texture2D(tex_sampler2, v_texcoord),mix_value);\n" +
                     "}\n";
 
     private static final float[] TEX_VERTICES = {
@@ -83,7 +78,7 @@ public class BitmapEffectGLRender implements AbsGLRender  {
 
     private static final int FLOAT_SIZE_BYTES = 4;
 
-    public BitmapEffectGLRender(Context context) {
+    public MixBitmapGLRender(Context context) {
         // TODO Auto-generated constructor stub
         mContext = context;
         mRunOnDraw = new LinkedList<>();
@@ -98,8 +93,10 @@ public class BitmapEffectGLRender implements AbsGLRender  {
         // Bind attributes and uniforms
         mTexSamplerHandle = GLES20.glGetUniformLocation(mProgram,
                 "tex_sampler");
+        mTexSamplerHandle2 = GLES20.glGetUniformLocation(mProgram , "tex_sampler2");
         mTexCoordHandle = GLES20.glGetAttribLocation(mProgram, "a_texcoord");
         mPosCoordHandle = GLES20.glGetAttribLocation(mProgram, "a_position");
+        mixValueHandle = GLES20.glGetUniformLocation(mProgram , "mix_value");
 
         // Setup coordinate buffers
         mTexVertices = ByteBuffer.allocateDirect(
@@ -128,7 +125,7 @@ public class BitmapEffectGLRender implements AbsGLRender  {
         computeOutputVertices();
     }
 
-    public void renderTexture(int texId) {
+    public void renderTexture(int[] texHanlers , int[] texIds){
         GLES20.glUseProgram(mProgram);
         GLToolbox.checkGlError("glUseProgram");
 
@@ -137,19 +134,27 @@ public class BitmapEffectGLRender implements AbsGLRender  {
 
         GLES20.glDisable(GLES20.GL_BLEND);
 
+
+
         GLES20.glVertexAttribPointer(mTexCoordHandle, 2, GLES20.GL_FLOAT, false,
                 0, mTexVertices);
         GLES20.glEnableVertexAttribArray(mTexCoordHandle);
+
+
         GLES20.glVertexAttribPointer(mPosCoordHandle, 2, GLES20.GL_FLOAT, false,
                 0, mPosVertices);
         GLES20.glEnableVertexAttribArray(mPosCoordHandle);
         GLToolbox.checkGlError("vertex attribute setup");
-
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLToolbox.checkGlError("glActiveTexture");
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texId);//把已经处理好的Texture传到GL上面
-        GLToolbox.checkGlError("glBindTexture");
-        GLES20.glUniform1i(mTexSamplerHandle, 0);
+        GLES20.glUniform1f(mixValueHandle , mixValue);
+        GLToolbox.checkGlError("vertex attribute mixValueHandle setup");
+        Log.d("tag" , "MixBitmapGLRender mixvalue : " + mixValue);
+        for (int i = 0 ; i < texIds.length ; i++){
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0+i);
+            GLToolbox.checkGlError("glActiveTexture tex : " + i);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texIds[i]);//把已经处理好的Texture传到GL上面
+            GLToolbox.checkGlError("glBindTexture");
+            GLES20.glUniform1i(texHanlers[i], i);
+        }
 
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
@@ -178,62 +183,41 @@ public class BitmapEffectGLRender implements AbsGLRender  {
         }
     }
 
-    private void initEffect() {
-
-        if (mEffect != null) {
-            mEffect.release();
-
-        }
-        EffectFactory effectFactory = mEffectContext.getFactory();
-        if (mEffectName == null||mEffectParams == null){
-            mEffect = effectFactory.createEffect(EffectFactory.EFFECT_BRIGHTNESS);
-            mEffect.setParameter("brightness" , 0.5f);
-        }else {
-            mEffect = effectFactory.createEffect(mEffectName);
-            mEffect.setParameter(mEffectParams , mEffectValue);
-        }
-        LogUtils.Companion.w("effect value : " + mEffectValue);
-
-
-
-
-    }
-
 
     private void setImageBitmap(){
         runOnDraw(new Runnable() {
 
             @Override
             public void run() {
-                loadTexture();
+                // TODO Auto-generated method stub
+                loadTexture2();
             }
         });
     }
 
-    private void loadTexture(){
-        Bitmap bmp = BitmapFactory.decodeResource(mContext.getResources() ,R.drawable.aaa);
+
+    private void loadTexture2(){
+        Bitmap originBitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.aaa);
         GLES20.glGenTextures(2, mTextures , 0);
 
-        updateTextureSize(bmp.getWidth(), bmp.getHeight());
-
-        mImageWidth = bmp.getWidth();
-        mImageHeight = bmp.getHeight();
+        updateTextureSize(originBitmap.getWidth(), originBitmap.getHeight());
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextures[0]);
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bmp, 0);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, originBitmap, 0);
+        GLToolbox.initTexParams();
 
+        Bitmap mixBitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.origin_1);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextures[1]);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, mixBitmap, 0);
         GLToolbox.initTexParams();
     }
 
-    private void applyEffect() {
-        Log.i("info","apply Effect:"+mEffect);
-
-
-        mEffect.apply(mTextures[0], mImageWidth, mImageHeight, mTextures[1]);
-    }
-
     private void renderResult() {
-        renderTexture(mTextures[1]);
+
+        int[] texs = new int[]{mTextures[0],mTextures[1]};
+        int[] texHandlers = new int[]{mTexSamplerHandle2,mTexSamplerHandle};
+        renderTexture(texHandlers,texs);
+
     }
 
     @Override
@@ -241,7 +225,6 @@ public class BitmapEffectGLRender implements AbsGLRender  {
         // TODO Auto-generated method stub
         if(!initialized){
             init();
-            mEffectContext = EffectContext.createWithCurrentGlContext();
             initialized = true;
         }
 
@@ -251,9 +234,6 @@ public class BitmapEffectGLRender implements AbsGLRender  {
                 mRunOnDraw.poll().run();
             }
         }
-
-        initEffect();
-        applyEffect();
 
         renderResult();
     }
@@ -276,14 +256,14 @@ public class BitmapEffectGLRender implements AbsGLRender  {
         }
     }
 
+
     @Override
     public void setEffect(String effectName, String paramsName) {
-        mEffectName = effectName;
-        mEffectParams = paramsName;
+
     }
 
     @Override
     public void setParams(float value) {
-        mEffectValue = value;
+        mixValue = value;
     }
 }

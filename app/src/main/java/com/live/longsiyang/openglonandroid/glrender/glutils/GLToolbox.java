@@ -1,4 +1,4 @@
-package com.live.longsiyang.openglonandroid;
+package com.live.longsiyang.openglonandroid.glrender.glutils;
 
 import android.opengl.GLES20;
 

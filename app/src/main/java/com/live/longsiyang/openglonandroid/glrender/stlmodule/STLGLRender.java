@@ -1,9 +1,8 @@
-package com.live.longsiyang.openglonandroid.stlmodule;
+package com.live.longsiyang.openglonandroid.glrender.stlmodule;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLU;
-import android.opengl.GLUtils;
 
 import java.io.IOException;
 import java.io.InputStream;

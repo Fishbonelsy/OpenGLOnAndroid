@@ -8,5 +8,30 @@
     "id": "2",
     "name": "android.media.effect.effects.FisheyeEffect",
     "param": "scale"
+  },
+  {
+    "id": "3",
+    "name": "android.media.effect.effects.ContrastEffect",
+    "param": "contrast"
+  },
+  {
+    "id": "4",
+    "name": "android.media.effect.effects.AutoFixEffect",
+    "param": "scale"
+  },
+  {
+    "id": "5",
+    "name": "android.media.effect.effects.BlackWhiteEffect",
+    "param": "white"
+  },
+  {
+    "id": "6",
+    "name": "android.media.effect.effects.FillLightEffect",
+    "param": "strength"
+  },
+  {
+    "id": "7",
+    "name": "android.media.effect.effects.GrainEffect",
+    "param": "strength"
   }
 ]

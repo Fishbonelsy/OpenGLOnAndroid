@@ -1,11 +1,10 @@
-package com.live.longsiyang.openglonandroid;
+package com.live.longsiyang.openglonandroid.glrender;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
-import android.opengl.GLUtils;
-import android.util.Log;
+import android.opengl.GLSurfaceView;
+
+import com.live.longsiyang.openglonandroid.glrender.glutils.GLToolbox;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -17,20 +16,15 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
- * Created by oceanlong on 2018/7/5.
+ * Created by oceanlong on 2018/6/19.
  */
 
-public class MultipleBitmapGLRender implements AbsGLRender{
+public class ColorGLRender implements GLSurfaceView.Renderer  {
 
     private int mProgram;
-    private int mTexSamplerHandle;
-    private int mTexCoordHandle;
     private int mPosCoordHandle;
-    private int mPosCoordHandle2;
 
-    private FloatBuffer mTexVertices;
     private FloatBuffer mPosVertices;
-    private FloatBuffer mPosVertices2;
 
     private int mViewWidth;
     private int mViewHeight;
@@ -43,35 +37,24 @@ public class MultipleBitmapGLRender implements AbsGLRender{
     private int[] mTextures = new int[2];
     private boolean initialized = false;
 
-    private int mixValueHandle;
-    private float mixValue = 0;
-
     private static final String VERTEX_SHADER =
             "attribute vec4 a_position;\n" +
                     "attribute vec2 a_texcoord;\n" +
-                    "varying vec2 v_texcoord;\n" +
+                    "varying vec2 v_colorcoord;\n" +
                     "void main() {\n" +
-                    //"  gl_Position = a_position;\n" +
                     "  gl_Position = vec4(a_position.x,a_position.y,a_position.z, a_position.w);\n" +
-                    "  v_texcoord = a_texcoord;\n" +
+                    "  v_colorcoord = vec2(a_position.x,a_position.y);\n"+
                     "}\n";
 
     private static final String FRAGMENT_SHADER =
             "precision mediump float;\n" +
-                    "uniform sampler2D tex_sampler;\n" +
-                    "uniform sampler2D tex_sampler2;\n" +
-                    "uniform float mix_value;\n" +
-                    "varying vec2 v_texcoord;\n" +
+                    "varying vec2 v_colorcoord;\n" +
                     "void main() {\n" +
-                    "  gl_FragColor = texture2D(tex_sampler, v_texcoord);\n" +
+                    "  gl_FragColor = vec4(v_colorcoord.x,v_colorcoord.y,0.5,1.0);\n" +
                     "}\n";
 
     private static final float[] TEX_VERTICES = {
             0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f
-    };
-
-    private static final float[] POS_VERTICES2 = {
-            -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f
     };
 
     private static final float[] POS_VERTICES = {
@@ -80,11 +63,10 @@ public class MultipleBitmapGLRender implements AbsGLRender{
 
     private static final int FLOAT_SIZE_BYTES = 4;
 
-    public MultipleBitmapGLRender(Context context) {
+    public ColorGLRender(Context context) {
         // TODO Auto-generated constructor stub
         mContext = context;
         mRunOnDraw = new LinkedList<>();
-        setImageBitmap();
 
     }
 
@@ -92,26 +74,14 @@ public class MultipleBitmapGLRender implements AbsGLRender{
         // Create program
         mProgram = GLToolbox.createProgram(VERTEX_SHADER, FRAGMENT_SHADER);
 
-        // Bind attributes and uniforms
-        mTexSamplerHandle = GLES20.glGetUniformLocation(mProgram,
-                "tex_sampler");
-        mTexCoordHandle = GLES20.glGetAttribLocation(mProgram, "a_texcoord");
+        // Bind attributes
         mPosCoordHandle = GLES20.glGetAttribLocation(mProgram, "a_position");
-        mixValueHandle = GLES20.glGetUniformLocation(mProgram , "mix_value");
 
         // Setup coordinate buffers
-        mTexVertices = ByteBuffer.allocateDirect(
-                TEX_VERTICES.length * FLOAT_SIZE_BYTES)
-                .order(ByteOrder.nativeOrder()).asFloatBuffer();
-        mTexVertices.put(TEX_VERTICES).position(0);
         mPosVertices = ByteBuffer.allocateDirect(
                 POS_VERTICES.length * FLOAT_SIZE_BYTES)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         mPosVertices.put(POS_VERTICES).position(0);
-        mPosVertices2 = ByteBuffer.allocateDirect(
-                POS_VERTICES2.length * FLOAT_SIZE_BYTES)
-                .order(ByteOrder.nativeOrder()).asFloatBuffer();
-        mPosVertices2.put(POS_VERTICES2).position(0);
     }
 
     public void tearDown() {
@@ -121,7 +91,14 @@ public class MultipleBitmapGLRender implements AbsGLRender{
     public void updateTextureSize(int texWidth, int texHeight) {
         mTexWidth = texWidth;
         mTexHeight = texHeight;
-        computeOutputVertices();
+        float x0, y0, x1, y1;
+        x0 = -texWidth/(float)(mViewWidth)/2;
+        x1 = texWidth/(float)(mViewWidth)/2;
+        y0 = -texHeight/(float)(mViewHeight)/2;
+        y1 = texHeight/(float)(mViewHeight)/2;
+        float[] coords = new float[] { x0, y0, x1, y0, x0, y1, x1, y1 };
+        mPosVertices.put(coords).position(0);
+        //computeOutputVertices();
     }
 
     public void updateViewSize(int viewWidth, int viewHeight) {
@@ -130,7 +107,7 @@ public class MultipleBitmapGLRender implements AbsGLRender{
         computeOutputVertices();
     }
 
-    public void renderTexture(int[] texHanlers , int[] texIds){
+    public void renderTexture(int texId) {
         GLES20.glUseProgram(mProgram);
         GLToolbox.checkGlError("glUseProgram");
 
@@ -139,43 +116,19 @@ public class MultipleBitmapGLRender implements AbsGLRender{
 
         GLES20.glDisable(GLES20.GL_BLEND);
 
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-
-        GLES20.glVertexAttribPointer(mTexCoordHandle, 2, GLES20.GL_FLOAT, false,
-                0, mTexVertices);
-        GLES20.glEnableVertexAttribArray(mTexCoordHandle);
-
-
+        GLToolbox.checkGlError("TexCoor attribute setup");
         GLES20.glVertexAttribPointer(mPosCoordHandle, 2, GLES20.GL_FLOAT, false,
                 0, mPosVertices);
         GLES20.glEnableVertexAttribArray(mPosCoordHandle);
-        GLToolbox.checkGlError("vertex attribute setup");
-        GLES20.glUniform1f(mixValueHandle , mixValue);
-        GLToolbox.checkGlError("vertex attribute mixValueHandle setup");
-        Log.d("tag" , "MultipleBitmapGLRender mixvalue : " + mixValue);
+        GLToolbox.checkGlError("PosCoor attribute setup");
+
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLToolbox.checkGlError("glActiveTexture tex : " + 0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextures[0]);//把已经处理好的Texture传到GL上面
+        GLToolbox.checkGlError("glActiveTexture");
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texId);//把已经处理好的Texture传到GL上面
         GLToolbox.checkGlError("glBindTexture");
-        GLES20.glUniform1i(texHanlers[0], 0);
 
-
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-
-        GLES20.glVertexAttribPointer(mPosCoordHandle, 2, GLES20.GL_FLOAT, false,
-                0, mPosVertices2);
-        GLES20.glEnableVertexAttribArray(mPosCoordHandle);
-        GLToolbox.checkGlError("vertex attribute setup");
-        GLES20.glUniform1f(mixValueHandle , mixValue);
-        GLToolbox.checkGlError("vertex attribute mixValueHandle setup");
-        Log.d("tag" , "MultipleBitmapGLRender mixvalue : " + mixValue);
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
-        GLToolbox.checkGlError("glActiveTexture tex : " + 1);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextures[1]);//把已经处理好的Texture传到GL上面
-        GLToolbox.checkGlError("glBindTexture");
-        GLES20.glUniform1i(texHanlers[1], 1);
-
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     }
 
@@ -201,46 +154,28 @@ public class MultipleBitmapGLRender implements AbsGLRender{
         }
     }
 
-
-    private void setImageBitmap(){
+    public void setTexture(final int width, final int height){
         runOnDraw(new Runnable() {
 
             @Override
             public void run() {
-                // TODO Auto-generated method stub
-                loadTexture2();
+                loadTexture(width, height);
             }
         });
     }
 
-
-    private void loadTexture2(){
-        Bitmap originBitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.aaa);
+    private void loadTexture(int width, int height){
         GLES20.glGenTextures(2, mTextures , 0);
-
-        updateTextureSize(originBitmap.getWidth(), originBitmap.getHeight());
-
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextures[0]);
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, originBitmap, 0);
-        GLToolbox.initTexParams();
-
-        Bitmap mixBitmap = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.origin_1);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextures[1]);
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, mixBitmap, 0);
         GLToolbox.initTexParams();
     }
 
     private void renderResult() {
-
-        int[] texs = new int[]{mTextures[0],mTextures[1]};
-        int[] texHandlers = new int[]{mTexSamplerHandle,mTexSamplerHandle};
-        renderTexture(texHandlers,texs);
-
+        renderTexture(mTextures[0]);
     }
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        // TODO Auto-generated method stub
         if(!initialized){
             init();
             initialized = true;
@@ -258,30 +193,18 @@ public class MultipleBitmapGLRender implements AbsGLRender{
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        // TODO Auto-generated method stub
         updateViewSize(width, height);
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        // TODO Auto-generated method stub
 
     }
 
-    protected void runOnDraw(final Runnable runnable) {
+    private void runOnDraw(final Runnable runnable) {
         synchronized (mRunOnDraw) {
             mRunOnDraw.add(runnable);
         }
     }
 
-
-    @Override
-    public void setEffect(String effectName, String paramsName) {
-
-    }
-
-    @Override
-    public void setParams(float value) {
-        mixValue = value;
-    }
 }
