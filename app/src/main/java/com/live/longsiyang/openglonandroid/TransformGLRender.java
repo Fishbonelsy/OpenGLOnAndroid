@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -30,7 +31,6 @@ public class TransformGLRender implements AbsGLRender  {
 
     private FloatBuffer mTexVertices;
     private FloatBuffer mPosVertices;
-    private FloatBuffer mTransVertices;
 
     private int mViewWidth;
     private int mViewHeight;
@@ -42,6 +42,7 @@ public class TransformGLRender implements AbsGLRender  {
     private final Queue<Runnable> mRunOnDraw;
     private int[] mTextures = new int[2];
     private boolean initialized = false;
+    private float progressValue = 0;
 
 
     private static final String VERTEX_SHADER =
@@ -108,11 +109,6 @@ public class TransformGLRender implements AbsGLRender  {
         mPosVertices = ByteBuffer.allocateDirect(
                 POS_VERTICES.length * FLOAT_SIZE_BYTES)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
-        mPosVertices.put(POS_VERTICES).position(0);
-        mTransVertices = ByteBuffer.allocateDirect(
-                TRANS_VERTICES.length*FLOAT_SIZE_BYTES)
-                .order(ByteOrder.nativeOrder()).asFloatBuffer();
-        mTransVertices.put(TRANS_VERTICES).position(0);
     }
 
     public void tearDown() {
@@ -146,7 +142,10 @@ public class TransformGLRender implements AbsGLRender  {
         GLES20.glVertexAttribPointer(mPosCoordHandle, 2, GLES20.GL_FLOAT, false,
                 0, mPosVertices);
         GLES20.glEnableVertexAttribArray(mPosCoordHandle);
-        GLES20.glUniformMatrix4fv(mTransformHandle , 1  , false , mTransVertices);
+
+        FloatBuffer trans = getTransVertices();
+
+        GLES20.glUniformMatrix4fv(mTransformHandle , 1  , false , trans);
         GLToolbox.checkGlError("vertex attribute setup");
 
         for (int i = 0 ; i < texIds.length ; i++){
@@ -257,6 +256,23 @@ public class TransformGLRender implements AbsGLRender  {
         }
     }
 
+    private FloatBuffer getTransVertices(){
+        FloatBuffer transVertices;
+        float size = (float) Math.cos(progressValue);
+        float rotate = (float) Math.sin(progressValue);
+        float[] TRANS_VERTICES = {
+                size, -rotate, 0, 0,
+                rotate, size, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+        };
+        transVertices =  ByteBuffer.allocateDirect(
+                TRANS_VERTICES.length*FLOAT_SIZE_BYTES)
+                .order(ByteOrder.nativeOrder()).asFloatBuffer();
+        transVertices.put(TRANS_VERTICES).position(0);
+        return transVertices;
+    }
+
 
     @Override
     public void setEffect(String effectName, String paramsName) {
@@ -265,6 +281,6 @@ public class TransformGLRender implements AbsGLRender  {
 
     @Override
     public void setParams(float value) {
-
+        progressValue = value;
     }
 }
