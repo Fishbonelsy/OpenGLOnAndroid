@@ -1,14 +1,12 @@
-package com.live.longsiyang.openglonandroid.effects.adapter
+package com.live.longsiyang.openglonandroid.picture.effects.adapter
 
 import android.content.Context
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import com.live.longsiyang.openglonandroid.R
-import com.live.longsiyang.openglonandroid.effects.data.LocalEffect
-import com.live.longsiyang.openglonandroid.utils.ToastUtils
+import com.live.longsiyang.openglonandroid.picture.effects.data.LocalEffect
 import kotlinx.android.synthetic.main.effect_list_item_layout.view.*
 
 /**

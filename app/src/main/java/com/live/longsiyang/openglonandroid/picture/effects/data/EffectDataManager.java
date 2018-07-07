@@ -1,4 +1,4 @@
-package com.live.longsiyang.openglonandroid.effects.data;
+package com.live.longsiyang.openglonandroid.picture.effects.data;
 
 import android.content.Context;
 

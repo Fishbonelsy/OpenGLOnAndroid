@@ -1,4 +1,4 @@
-package com.live.longsiyang.openglonandroid.glrender;
+package com.live.longsiyang.openglonandroid.picture.glrender;
 
 import android.opengl.GLSurfaceView;
 

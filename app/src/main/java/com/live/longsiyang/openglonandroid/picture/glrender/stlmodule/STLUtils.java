@@ -1,4 +1,4 @@
-package com.live.longsiyang.openglonandroid.glrender.stlmodule;
+package com.live.longsiyang.openglonandroid.picture.glrender.stlmodule;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

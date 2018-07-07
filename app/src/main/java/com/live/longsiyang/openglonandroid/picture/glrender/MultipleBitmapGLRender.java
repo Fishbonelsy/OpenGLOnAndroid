@@ -1,4 +1,4 @@
-package com.live.longsiyang.openglonandroid.glrender;
+package com.live.longsiyang.openglonandroid.picture.glrender;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -7,7 +7,7 @@ import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.util.Log;
 
-import com.live.longsiyang.openglonandroid.glrender.glutils.GLToolbox;
+import com.live.longsiyang.openglonandroid.picture.glutils.GLToolbox;
 import com.live.longsiyang.openglonandroid.R;
 
 import java.nio.ByteBuffer;
