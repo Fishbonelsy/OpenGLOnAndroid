@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
 import android.media.effect.Effect;
 import android.media.effect.EffectContext;
 import android.media.effect.EffectFactory;
@@ -12,12 +13,14 @@ import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
+import android.opengl.Matrix;
 import android.util.Log;
 
 import com.live.longsiyang.openglonandroid.R;
 import com.live.longsiyang.openglonandroid.picture.glutils.GLToolbox;
 import com.live.longsiyang.openglonandroid.utils.LogUtils;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -29,236 +32,159 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class CameraRender implements GLSurfaceView.Renderer {
 
-    public SurfaceTexture mSurfaceTexture;
+    private int camera_status = 0;
+    private final String vertexShaderCode = "uniform mat4 textureTransform;\n" +
+            "attribute vec2 inputTextureCoordinate;\n" +
+            "attribute vec4 position;            \n" +//NDK坐标点
+            "varying   vec2 textureCoordinate; \n" +//纹理坐标点变换后输出
+            "\n" +
+            " void main() {\n" +
+            "     gl_Position = vec4(position.x,-position.y,position.z,position.w);\n" +
+            "     textureCoordinate = vec2(inputTextureCoordinate.x,inputTextureCoordinate.y);\n" +
+            " }";
 
-    private int mProgram;
-    private int mTexSamplerHandle;
-    private int mTexCoordHandle;
-    private int mPosCoordHandle;
+    private final String fragmentShaderCode = "#extension GL_OES_EGL_image_external : require\n" +
+            "precision mediump float;\n" +
+            "uniform samplerExternalOES videoTex;\n" +
+            "varying vec2 textureCoordinate;\n" +
+            "\n" +
+            "void main() {\n" +
+            "    vec4 tc = texture2D(videoTex, textureCoordinate);\n" +
+//                "    float color = tc.r * 0.3 + tc.g * 0.59 + tc.b * 0.11;\n" +  //所有视图修改成黑白
+//                "    gl_FragColor = vec4(color,color,color,1.0);\n" +
+            "    gl_FragColor = vec4(tc.r,tc.g,tc.b,1.0);\n" +
+            "}\n";
+    private FloatBuffer mPosBuffer;
+    private FloatBuffer mTexBuffer;
+    private float[] mPosCoordinate = {-1, -1, -1, 1, 1, -1, 1, 1};
+    private float[] mTexCoordinateBackRight = {1, 1, 0, 1, 1, 0, 0, 0};//顺时针转90并沿Y轴翻转  后摄像头正确，前摄像头上下颠倒
+    private float[] mTexCoordinateForntRight = {0, 1, 1, 1, 0, 0, 1, 0};//顺时针旋转90  后摄像头上下颠倒了，前摄像头正确
+    private SurfaceTexture mSurfaceTexture;
+    private Camera mCamera;
+    private SurfaceTexture.OnFrameAvailableListener mOnFrameAvailableListener;
 
-    private FloatBuffer mTexVertices;
-    private FloatBuffer mPosVertices;
+    public int mProgram;
+    public boolean mBoolean = false;
 
-    private int mViewWidth;
-    private int mViewHeight;
-
-    private int mTexWidth;
-    private int mTexHeight;
-
-    private Context mContext;
-    private final Queue<Runnable> mRunOnDraw;
-    private int[] mTextures = new int[2];
-
-    private int mImageWidth;
-    private int mImageHeight;
-    private boolean initialized = false;
-
-    private SurfaceTexture.OnFrameAvailableListener mFrameAvailableListener;
-
-
-    private static final String VERTEX_SHADER =
-            "attribute vec4 a_position;\n" +
-                    "attribute vec2 a_texcoord;\n" +
-                    "varying vec2 v_texcoord;\n" +
-                    "void main() {\n" +
-                    //"  gl_Position = a_position;\n" +
-                    "  gl_Position = vec4(a_position.x,a_position.y,a_position.z, a_position.w);\n" +
-                    "  v_texcoord = a_texcoord;\n" +
-                    "}\n";
-
-    private static final String FRAGMENT_SHADER =
-            "#extension GL_OES_EGL_image_external : require\n" +
-                    "precision mediump float;\n" +
-                    "uniform samplerExternalOES videoTex;\n" +
-                    "varying vec2 v_texcoord;\n" +
-                    "\n" +
-                    "void main() {\n" +
-                    "    vec4 tc = texture2D(videoTex, v_texcoord);\n" +
-//                    "    float color = tc.r * 0.3 + tc.g * 0.59 + tc.b * 0.11;\n" +  //所有视图修改成黑白
-//                    "    gl_FragColor = vec4(color,color,color,1.0);\n" +
-                "    gl_FragColor = vec4(tc.r,tc.g,tc.b,1.0);\n" +
-                    "}\n";
-
-//            "#extension GL_OES_EGL_image_external : require\n" +
-//            "precision mediump float;\n" +
-//                    "uniform sampler2D tex_sampler;\n" +
-//                    "varying vec2 v_texcoord;\n" +
-//                    "void main() {\n" +
-//                    "  gl_FragColor = texture2D(tex_sampler, v_texcoord);\n" +
-//                    "}\n";
-
-    private static final float[] TEX_VERTICES = {
-            0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f
-    };
-
-    private static final float[] POS_VERTICES = {
-            -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f
-    };
-
-    private static final int FLOAT_SIZE_BYTES = 4;
-
-    public CameraRender(Context context , SurfaceTexture.OnFrameAvailableListener listener) {
-        // TODO Auto-generated constructor stub
-        mContext = context;
-        mRunOnDraw = new LinkedList<>();
-        mFrameAvailableListener = listener;
-        //setImageBitmap();
-
+    public CameraRender( Camera camera , SurfaceTexture.OnFrameAvailableListener listener) {
+        mCamera = camera;
+        mOnFrameAvailableListener = listener;
+        Matrix.setIdentityM(mProjectMatrix, 0);
+        Matrix.setIdentityM(mCameraMatrix, 0);
+        Matrix.setIdentityM(mMVPMatrix, 0);
+        Matrix.setIdentityM(mTempMatrix, 0);
     }
 
-    public void init() {
-        // Create program
-        mProgram = GLToolbox.createProgram(VERTEX_SHADER, FRAGMENT_SHADER);
-
-        // Bind attributes and uniforms
-        mTexSamplerHandle = GLES20.glGetUniformLocation(mProgram,
-                "tex_sampler");
-        mTexCoordHandle = GLES20.glGetAttribLocation(mProgram, "a_texcoord");
-        mPosCoordHandle = GLES20.glGetAttribLocation(mProgram, "a_position");
-
-        // Setup coordinate buffers
-        mTexVertices = ByteBuffer.allocateDirect(
-                TEX_VERTICES.length * FLOAT_SIZE_BYTES)
-                .order(ByteOrder.nativeOrder()).asFloatBuffer();
-        mTexVertices.put(TEX_VERTICES).position(0);
-        mPosVertices = ByteBuffer.allocateDirect(
-                POS_VERTICES.length * FLOAT_SIZE_BYTES)
-                .order(ByteOrder.nativeOrder()).asFloatBuffer();
-        mPosVertices.put(POS_VERTICES).position(0);
+    private int loadShader(int type, String shaderCode) {
+        int shader = GLES20.glCreateShader(type);
+        // 添加上面编写的着色器代码并编译它
+        GLES20.glShaderSource(shader, shaderCode);
+        GLES20.glCompileShader(shader);
+        return shader;
     }
 
-    public void tearDown() {
-        GLES20.glDeleteProgram(mProgram);
+    private void creatProgram() {
+        int vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
+        int fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
+        // 创建空的OpenGL ES程序
+        mProgram = GLES20.glCreateProgram();
+
+        // 添加顶点着色器到程序中
+        GLES20.glAttachShader(mProgram, vertexShader);
+
+        // 添加片段着色器到程序中
+        GLES20.glAttachShader(mProgram, fragmentShader);
+
+        // 创建OpenGL ES程序可执行文件
+        GLES20.glLinkProgram(mProgram);
+
+        // 释放shader资源
+        GLES20.glDeleteShader(vertexShader);
+        GLES20.glDeleteShader(fragmentShader);
     }
 
-    public void updateTextureSize(int texWidth, int texHeight) {
-        mTexWidth = texWidth;
-        mTexHeight = texHeight;
-        computeOutputVertices();
+    private FloatBuffer convertToFloatBuffer(float[] buffer) {
+        FloatBuffer fb = ByteBuffer.allocateDirect(buffer.length * 4)
+                .order(ByteOrder.nativeOrder())
+                .asFloatBuffer();
+        fb.put(buffer);
+        fb.position(0);
+        return fb;
     }
 
-    public void updateViewSize(int viewWidth, int viewHeight) {
-        mViewWidth = viewWidth;
-        mViewHeight = viewHeight;
-        computeOutputVertices();
-    }
+    private int uPosHandle;
+    private int aTexHandle;
+    private int mMVPMatrixHandle;
+    private float[] mProjectMatrix = new float[16];
+    private float[] mCameraMatrix = new float[16];
+    private float[] mMVPMatrix = new float[16];
+    private float[] mTempMatrix = new float[16];
 
-    public void renderTexture(int texId) {
+    //添加程序到ES环境中
+    private void activeProgram() {
+        // 将程序添加到OpenGL ES环境
         GLES20.glUseProgram(mProgram);
-        GLToolbox.checkGlError("glUseProgram");
+        mSurfaceTexture.setOnFrameAvailableListener(mOnFrameAvailableListener);
+        // 获取顶点着色器的位置的句柄
+        uPosHandle = GLES20.glGetAttribLocation(mProgram, "position");
+        aTexHandle = GLES20.glGetAttribLocation(mProgram, "inputTextureCoordinate");
+        mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "textureTransform");
 
-        GLES20.glViewport(0, 0, mViewWidth, mViewHeight);
-        GLToolbox.checkGlError("glViewport");
-
-        GLES20.glDisable(GLES20.GL_BLEND);
-
-        GLES20.glVertexAttribPointer(mTexCoordHandle, 2, GLES20.GL_FLOAT, false,
-                0, mTexVertices);
-        GLES20.glEnableVertexAttribArray(mTexCoordHandle);
-        GLES20.glVertexAttribPointer(mPosCoordHandle, 2, GLES20.GL_FLOAT, false,
-                0, mPosVertices);
-        GLES20.glEnableVertexAttribArray(mPosCoordHandle);
-        GLToolbox.checkGlError("vertex attribute setup");
-
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLToolbox.checkGlError("glActiveTexture");
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texId);//把已经处理好的Texture传到GL上面
-        GLToolbox.checkGlError("glBindTexture");
-        GLES20.glUniform1i(mTexSamplerHandle, 0);
-
-        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-    }
-
-    private void computeOutputVertices() { //调整AspectRatio 保证landscape和portrait的时候显示比例相同，图片不会被拉伸
-        if (mPosVertices != null) {
-            float imgAspectRatio = mTexWidth / (float)mTexHeight;
-            float viewAspectRatio = mViewWidth / (float)mViewHeight;
-            float relativeAspectRatio = viewAspectRatio / imgAspectRatio;
-            float x0, y0, x1, y1;
-            if (relativeAspectRatio > 1.0f) {
-                x0 = -1.0f / relativeAspectRatio;
-                y0 = -1.0f;
-                x1 = 1.0f / relativeAspectRatio;
-                y1 = 1.0f;
-            } else {
-                x0 = -1.0f;
-                y0 = -relativeAspectRatio;
-                x1 = 1.0f;
-                y1 = relativeAspectRatio;
-            }
-            float[] coords = new float[] { x0, y0, x1, y0, x0, y1, x1, y1 };
-            mPosVertices.put(coords).position(0);
-        }
-    }
-
-
-
-    private void setImageBitmap(){
-        runOnDraw(new Runnable() {
-
-            @Override
-            public void run() {
-                loadTexture();
-            }
-        });
-    }
-
-    private void loadTexture(){
-        Bitmap bmp = BitmapFactory.decodeResource(mContext.getResources() , R.drawable.aaa);
-        GLES20.glGenTextures(2, mTextures , 0);
-
-        updateTextureSize(bmp.getWidth(), bmp.getHeight());
-
-        mImageWidth = bmp.getWidth();
-        mImageHeight = bmp.getHeight();
-
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextures[0]);
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bmp, 0);
-
-        GLToolbox.initTexParams();
-    }
-
-    private void renderResult() {
-        mSurfaceTexture.updateTexImage();
-//        renderTexture(mTextures[0]);
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-    }
-
-    @Override
-    public void onDrawFrame(GL10 gl) {
-        if(!initialized){
-            init();
-            initialized = true;
+        mPosBuffer = convertToFloatBuffer(mPosCoordinate);
+        if(camera_status == 0){
+            mTexBuffer = convertToFloatBuffer(mTexCoordinateBackRight);
+        }else{
+            mTexBuffer = convertToFloatBuffer(mTexCoordinateForntRight);
         }
 
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
-        synchronized (mRunOnDraw) {
-            while (!mRunOnDraw.isEmpty()) {
-                mRunOnDraw.poll().run();
-            }
-        }
+        GLES20.glVertexAttribPointer(uPosHandle, 2, GLES20.GL_FLOAT, false, 0, mPosBuffer);
+        GLES20.glVertexAttribPointer(aTexHandle, 2, GLES20.GL_FLOAT, false, 0, mTexBuffer);
 
-        renderResult();
-    }
-
-    @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
-        updateViewSize(width, height);
+        // 启用顶点位置的句柄
+        GLES20.glEnableVertexAttribArray(uPosHandle);
+        GLES20.glEnableVertexAttribArray(aTexHandle);
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         mSurfaceTexture = new SurfaceTexture(createOESTextureObject());
-        CameraInterface.getInstance().doOpenCamera((Activity) mContext);
-        CameraInterface.getInstance().doStartPreview(mSurfaceTexture);
-        mSurfaceTexture.setOnFrameAvailableListener(mFrameAvailableListener);
+        creatProgram();
+//            mProgram = ShaderUtils.createProgram(CameraGlSurfaceShowActivity.this, "vertex_texture.glsl", "fragment_texture.glsl");
+        mCamera = Camera.open(1);
+        try {
+            mCamera.setPreviewTexture(mSurfaceTexture);
+            mCamera.startPreview();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
+    @Override
+    public void onSurfaceChanged(GL10 gl, int width, int height) {
+        GLES20.glViewport(0, 0, width, height);
+        Matrix.scaleM(mMVPMatrix,0,1,-1,1);
+        float ratio = (float) width / height;
+        Matrix.orthoM(mProjectMatrix, 0, -1, 1, -ratio, ratio, 1, 7);// 3和7代表远近视点与眼睛的距离，非坐标点
+        Matrix.setLookAtM(mCameraMatrix, 0, 0, 0, 3, 0f, 0f, 0f, 0f, 1.0f, 0.0f);// 3代表眼睛的坐标点
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjectMatrix, 0, mCameraMatrix, 0);
+    }
 
-    public static int createOESTextureObject() {
+    @Override
+    public void onDrawFrame(GL10 gl) {
+        if(mBoolean){
+            activeProgram();
+            mBoolean = false;
+        }
+        if (mSurfaceTexture != null) {
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+            mSurfaceTexture.updateTexImage();
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, mPosCoordinate.length / 2);
+        }
+    }
+
+    private int createOESTextureObject() {
         int[] tex = new int[1];
         //生成一个纹理
         GLES20.glGenTextures(1, tex, 0);
@@ -275,13 +201,6 @@ public class CameraRender implements GLSurfaceView.Renderer {
                 GL10.GL_TEXTURE_WRAP_T, GL10.GL_CLAMP_TO_EDGE);
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
         return tex[0];
-    }
-
-
-    protected void runOnDraw(final Runnable runnable) {
-        synchronized (mRunOnDraw) {
-            mRunOnDraw.add(runnable);
-        }
     }
 
 }

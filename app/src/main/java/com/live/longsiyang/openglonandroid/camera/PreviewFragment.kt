@@ -36,7 +36,7 @@ class PreviewFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         mRootView = view
         if (GLUtils.checkSupported(mContext) && view != null) {
-            glRenderer = CameraRender(mContext ,mFrameAvailableListener)
+//            glRenderer = CameraRender(mContext ,mFrameAvailableListener)
             view.glsv_effect_preview.setEGLContextClientVersion(2);
             view.glsv_effect_preview.setRenderer(glRenderer)
             view.glsv_effect_preview.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY)

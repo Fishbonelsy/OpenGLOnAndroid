@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         mFragmentManager = getFragmentManager()
-        mFragment = PreviewFragment()
+        mFragment = PictureFragment()
 
         mFragmentManager.beginTransaction().add(R.id.fl_main_container,mFragment).commit()
 
