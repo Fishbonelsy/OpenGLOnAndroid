@@ -53,9 +53,7 @@ public class CameraRender implements GLSurfaceView.Renderer {
 //                "    float color = tc.r * 0.3 + tc.g * 0.59 + tc.b * 0.11;\n" +  //所有视图修改成黑白
 //                "    gl_FragColor = vec4(color,color,color,1.0);\n" +
             "    gl_FragColor = vec4(tc.r,tc.g,tc.b,1.0);\n" +
-            "}\n";
-    private FloatBuffer mPosBuffer;
-    private FloatBuffer mTexBuffer;
+            "}";
     private float[] mPosCoordinate = {-1, -1, -1, 1, 1, -1, 1, 1};
     private float[] mTexCoordinateBackRight = {1, 1, 0, 1, 1, 0, 0, 0};//顺时针转90并沿Y轴翻转  后摄像头正确，前摄像头上下颠倒
     private float[] mTexCoordinateForntRight = {0, 1, 1, 1, 0, 0, 1, 0};//顺时针旋转90  后摄像头上下颠倒了，前摄像头正确
@@ -72,9 +70,14 @@ public class CameraRender implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(mProjectMatrix, 0);
         Matrix.setIdentityM(mCameraMatrix, 0);
         Matrix.setIdentityM(mMVPMatrix, 0);
-        Matrix.setIdentityM(mTempMatrix, 0);
     }
 
+    /**
+     * 加载着色器
+     * @param type 着色器类型
+     * @param shaderCode 着色器源码
+     * @return
+     */
     private int loadShader(int type, String shaderCode) {
         int shader = GLES20.glCreateShader(type);
         // 添加上面编写的着色器代码并编译它
@@ -114,11 +117,9 @@ public class CameraRender implements GLSurfaceView.Renderer {
 
     private int uPosHandle;
     private int aTexHandle;
-    private int mMVPMatrixHandle;
     private float[] mProjectMatrix = new float[16];
     private float[] mCameraMatrix = new float[16];
     private float[] mMVPMatrix = new float[16];
-    private float[] mTempMatrix = new float[16];
 
     //添加程序到ES环境中
     private void activeProgram() {
@@ -128,9 +129,9 @@ public class CameraRender implements GLSurfaceView.Renderer {
         // 获取顶点着色器的位置的句柄
         uPosHandle = GLES20.glGetAttribLocation(mProgram, "position");
         aTexHandle = GLES20.glGetAttribLocation(mProgram, "inputTextureCoordinate");
-        mMVPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "textureTransform");
 
-        mPosBuffer = convertToFloatBuffer(mPosCoordinate);
+        FloatBuffer mPosBuffer = convertToFloatBuffer(mPosCoordinate);
+        FloatBuffer mTexBuffer;
         if(camera_status == 0){
             mTexBuffer = convertToFloatBuffer(mTexCoordinateBackRight);
         }else{

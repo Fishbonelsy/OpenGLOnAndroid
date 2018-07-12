@@ -13,10 +13,8 @@ import java.io.IOException;
 import static android.opengl.GLSurfaceView.RENDERMODE_WHEN_DIRTY;
 
 public class CameraGlSurfaceShowActivity extends AppCompatActivity implements SurfaceTexture.OnFrameAvailableListener {
-    public SurfaceTexture mSurfaceTexture;
 
     public static Camera camera;
-    private int camera_status = 1;
     GLSurfaceView mCameraGlsurfaceView;
     public CameraRender mRenderer;
 
@@ -32,7 +30,6 @@ public class CameraGlSurfaceShowActivity extends AppCompatActivity implements Su
         mCameraGlsurfaceView.setRenderer(mRenderer);
         mCameraGlsurfaceView.setRenderMode(RENDERMODE_WHEN_DIRTY);
 
-        camera_status ^= 1;
         if (camera != null) {
             camera.stopPreview();
             camera.release();
