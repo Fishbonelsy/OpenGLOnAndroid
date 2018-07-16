@@ -1,31 +1,16 @@
 package com.live.longsiyang.openglonandroid.camera;
 
-import android.app.Activity;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
-import android.media.effect.Effect;
-import android.media.effect.EffectContext;
-import android.media.effect.EffectFactory;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
-import android.opengl.GLUtils;
 import android.opengl.Matrix;
-import android.util.Log;
-
-import com.live.longsiyang.openglonandroid.R;
-import com.live.longsiyang.openglonandroid.picture.glutils.GLToolbox;
-import com.live.longsiyang.openglonandroid.utils.LogUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.LinkedList;
-import java.util.Queue;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -47,16 +32,25 @@ public class CameraRender implements GLSurfaceView.Renderer {
             "precision mediump float;\n" +
             "uniform samplerExternalOES videoTex;\n" +
             "varying vec2 textureCoordinate;\n" +
+            "uniform mat4 color_transform_matrix;\n" +
             "\n" +
             "void main() {\n" +
             "    vec4 tc = texture2D(videoTex, textureCoordinate);\n" +
-//                "    float color = tc.r * 0.3 + tc.g * 0.59 + tc.b * 0.11;\n" +  //所有视图修改成黑白
-//                "    gl_FragColor = vec4(color,color,color,1.0);\n" +
-            "    gl_FragColor = vec4(tc.r,tc.g,tc.b,1.0);\n" +
+                "    vec4 color = vec4(tc.r,tc.g,tc.b,1.0); \n"+
+                "    gl_FragColor = color_transform_matrix * color;\n" +
+//            "    gl_FragColor = vec4(tc.r,tc.g,tc.b,1.0);\n" +
             "}";
+
+    private int mColorTransMatrixHandler ;
     private float[] mPosCoordinate = {-1, -1, -1, 1, 1, -1, 1, 1};
     private float[] mTexCoordinateBackRight = {1, 1, 0, 1, 1, 0, 0, 0};//顺时针转90并沿Y轴翻转  后摄像头正确，前摄像头上下颠倒
     private float[] mTexCoordinateForntRight = {0, 1, 1, 1, 0, 0, 1, 0};//顺时针旋转90  后摄像头上下颠倒了，前摄像头正确
+    private static final float[] COLOR_TRANS_VERTICES = {
+            0.6f, 0, 0, 0,
+            0, 0.6f, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+    };
     private SurfaceTexture mSurfaceTexture;
     private Camera mCamera;
     private SurfaceTexture.OnFrameAvailableListener mOnFrameAvailableListener;
@@ -144,6 +138,10 @@ public class CameraRender implements GLSurfaceView.Renderer {
         // 启用顶点位置的句柄
         GLES20.glEnableVertexAttribArray(uPosHandle);
         GLES20.glEnableVertexAttribArray(aTexHandle);
+
+        FloatBuffer mColorTransMatrixBuffer = convertFloatBuffer(COLOR_TRANS_VERTICES , 4);
+        GLES20.glUniformMatrix4fv(mColorTransMatrixHandler , 1  , false , mColorTransMatrixBuffer);
+        GLES20.glEnableVertexAttribArray(mColorTransMatrixHandler);
     }
 
     @Override
@@ -151,6 +149,8 @@ public class CameraRender implements GLSurfaceView.Renderer {
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         mSurfaceTexture = new SurfaceTexture(createOESTextureObject());
         creatProgram();
+        mColorTransMatrixHandler = GLES20.glGetUniformLocation(mProgram , "color_transform_matrix");
+
 //            mProgram = ShaderUtils.createProgram(CameraGlSurfaceShowActivity.this, "vertex_texture.glsl", "fragment_texture.glsl");
         mCamera = Camera.open(1);
         try {
@@ -204,4 +204,13 @@ public class CameraRender implements GLSurfaceView.Renderer {
         return tex[0];
     }
 
+
+    private FloatBuffer convertFloatBuffer (float[] vectices , int sizeByte){
+        FloatBuffer floatBuffer;
+        floatBuffer =  ByteBuffer.allocateDirect(
+                vectices.length*sizeByte)
+                .order(ByteOrder.nativeOrder()).asFloatBuffer();
+        floatBuffer.put(vectices).position(0);
+        return floatBuffer;
+    }
 }
