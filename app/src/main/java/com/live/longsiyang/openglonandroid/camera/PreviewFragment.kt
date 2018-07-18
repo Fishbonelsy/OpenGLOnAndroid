@@ -4,6 +4,7 @@ import android.app.Fragment
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.opengl.GLSurfaceView
+import android.opengl.GLSurfaceView.RENDERMODE_WHEN_DIRTY
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -20,7 +21,7 @@ class PreviewFragment : Fragment() {
     lateinit var mContext:Context
     var mRootView:View? = null
     lateinit var glRenderer: GLSurfaceView.Renderer
-
+    lateinit var mCameraGlsurfaceView: GLSurfaceView
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mContext = activity
@@ -36,10 +37,13 @@ class PreviewFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         mRootView = view
         if (GLUtils.checkSupported(mContext) && view != null) {
-//            glRenderer = CameraRender(mContext ,mFrameAvailableListener)
-            view.glsv_effect_preview.setEGLContextClientVersion(2);
-            view.glsv_effect_preview.setRenderer(glRenderer)
-            view.glsv_effect_preview.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY)
+            mCameraGlsurfaceView = view.findViewById(R.id.glsv_effect_preview);
+            mCameraGlsurfaceView.setEGLContextClientVersion(2);//在setRenderer()方法前调用此方法
+            glRenderer = CameraRender(mFrameAvailableListener);
+//        mRenderer.setFilter(new OldPictureFilter());
+            mCameraGlsurfaceView.setRenderer(glRenderer);
+            mCameraGlsurfaceView.setRenderMode(RENDERMODE_WHEN_DIRTY);
+
 
 
         } else {

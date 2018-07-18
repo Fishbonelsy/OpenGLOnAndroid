@@ -18,7 +18,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".camera.CameraGlSurfaceShowActivity"/>
     </application>
 
     <uses-permission android:name="android.permission.CAMERA"/>

@@ -6,6 +6,9 @@ import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.support.annotation.NonNull;
+
+import com.live.longsiyang.openglonandroid.camera.filter.AbsFilter;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -36,8 +39,8 @@ public class CameraRender implements GLSurfaceView.Renderer {
             "\n" +
             "void main() {\n" +
             "    vec4 tc = texture2D(videoTex, textureCoordinate);\n" +
-                "    vec4 color = vec4(tc.r,tc.g,tc.b,1.0); \n"+
-                "    gl_FragColor = color_transform_matrix * color;\n" +
+            "    vec4 color = vec4(tc.r,tc.g,tc.b,1.0); \n"+
+            "    gl_FragColor = color_transform_matrix * color;\n" +
 //            "    gl_FragColor = vec4(tc.r,tc.g,tc.b,1.0);\n" +
             "}";
 
@@ -45,25 +48,24 @@ public class CameraRender implements GLSurfaceView.Renderer {
     private float[] mPosCoordinate = {-1, -1, -1, 1, 1, -1, 1, 1};
     private float[] mTexCoordinateBackRight = {1, 1, 0, 1, 1, 0, 0, 0};//顺时针转90并沿Y轴翻转  后摄像头正确，前摄像头上下颠倒
     private float[] mTexCoordinateForntRight = {0, 1, 1, 1, 0, 0, 1, 0};//顺时针旋转90  后摄像头上下颠倒了，前摄像头正确
-    private static final float[] COLOR_TRANS_VERTICES = {
-            0.6f, 0, 0, 0,
-            0, 0.6f, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-    };
+
     private SurfaceTexture mSurfaceTexture;
     private Camera mCamera;
     private SurfaceTexture.OnFrameAvailableListener mOnFrameAvailableListener;
+    private AbsFilter mEffectFilter;
 
     public int mProgram;
-    public boolean mBoolean = false;
+    public boolean mInited = false;
 
-    public CameraRender( Camera camera , SurfaceTexture.OnFrameAvailableListener listener) {
-        mCamera = camera;
+    public CameraRender(SurfaceTexture.OnFrameAvailableListener listener) {
         mOnFrameAvailableListener = listener;
         Matrix.setIdentityM(mProjectMatrix, 0);
         Matrix.setIdentityM(mCameraMatrix, 0);
         Matrix.setIdentityM(mMVPMatrix, 0);
+    }
+
+    public void setFilter(@NonNull AbsFilter filter){
+        mEffectFilter = filter;
     }
 
     /**
@@ -139,9 +141,21 @@ public class CameraRender implements GLSurfaceView.Renderer {
         GLES20.glEnableVertexAttribArray(uPosHandle);
         GLES20.glEnableVertexAttribArray(aTexHandle);
 
-        FloatBuffer mColorTransMatrixBuffer = convertFloatBuffer(COLOR_TRANS_VERTICES , 4);
+        FloatBuffer mColorTransMatrixBuffer = convertFloatBuffer(createColorTransVertices() , 4);
         GLES20.glUniformMatrix4fv(mColorTransMatrixHandler , 1  , false , mColorTransMatrixBuffer);
         GLES20.glEnableVertexAttribArray(mColorTransMatrixHandler);
+    }
+
+    private float[] createColorTransVertices(){
+        if (mEffectFilter == null){
+            return new float[] {
+                    1, 0, 0, 0,
+                    0, 1, 0, 0,
+                    0, 0, 1, 0,
+                    0, 0, 0, 1
+            };
+        }
+        return mEffectFilter.getColorMatrix();
     }
 
     @Override
@@ -174,10 +188,8 @@ public class CameraRender implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 gl) {
-        if(mBoolean){
-            activeProgram();
-            mBoolean = false;
-        }
+        activeProgram();
+
         if (mSurfaceTexture != null) {
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
             mSurfaceTexture.updateTexImage();
