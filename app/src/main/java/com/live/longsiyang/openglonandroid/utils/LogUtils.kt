@@ -13,5 +13,9 @@ class LogUtils{
         fun w(content:String){
             Log.w(BASETAG , content)
         }
+
+        fun d(content:String){
+            Log.d(BASETAG , content)
+        }
     }
 }

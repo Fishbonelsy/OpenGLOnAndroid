@@ -10,13 +10,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import com.live.longsiyang.openglonandroid.BaseFragment
+import com.live.longsiyang.openglonandroid.EFApplication
 import com.live.longsiyang.openglonandroid.R
 
 import com.live.longsiyang.openglonandroid.utils.GLUtils
+import com.live.longsiyang.openglonandroid.utils.ResourceUtils
 import kotlinx.android.synthetic.main.gl_preview_fragment_layout.view.*
 
 
-class PreviewFragment : Fragment() {
+class PreviewFragment : BaseFragment() {
+
 
     lateinit var mContext:Context
     var mRootView:View? = null
@@ -50,6 +54,10 @@ class PreviewFragment : Fragment() {
 
             Toast.makeText(mContext, "当前设备不支持OpenGL ES 2.0!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    override fun getFragmentName(): String {
+        return ResourceUtils.getString(EFApplication.mAppContext , R.string.camera_preview_fragment_name)
     }
 
     var mFrameAvailableListener =  SurfaceTexture.OnFrameAvailableListener(

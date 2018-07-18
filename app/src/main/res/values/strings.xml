@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">OpenGLOnAndroid</string>
+    <string name="camera_preview_fragment_name">camera preview</string>
+    <string name="picture_process_fragment_name">picture process</string>
 </resources>

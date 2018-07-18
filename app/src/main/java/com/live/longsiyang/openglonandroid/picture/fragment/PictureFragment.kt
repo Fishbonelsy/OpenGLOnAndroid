@@ -12,6 +12,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
 import android.widget.Toast
+import com.live.longsiyang.openglonandroid.BaseFragment
+import com.live.longsiyang.openglonandroid.EFApplication
 import com.live.longsiyang.openglonandroid.R
 import com.live.longsiyang.openglonandroid.picture.effects.adapter.EffectListAdapter
 import com.live.longsiyang.openglonandroid.picture.effects.data.EffectDataManager
@@ -19,11 +21,12 @@ import com.live.longsiyang.openglonandroid.picture.effects.data.LocalEffect
 import com.live.longsiyang.openglonandroid.picture.glrender.AbsGLRender
 import com.live.longsiyang.openglonandroid.picture.glrender.BitmapEffectGLRender
 import com.live.longsiyang.openglonandroid.utils.GLUtils.Companion.checkSupported
+import com.live.longsiyang.openglonandroid.utils.ResourceUtils
 import com.live.longsiyang.openglonandroid.utils.ToastUtils
 import kotlinx.android.synthetic.main.gl_preview_fragment_layout.*
 import kotlinx.android.synthetic.main.gl_preview_fragment_layout.view.*
 
-class PictureFragment : Fragment() {
+class PictureFragment : BaseFragment() {
 
     lateinit var mContext:Context
     lateinit var glRenderer: AbsGLRender
@@ -57,6 +60,11 @@ class PictureFragment : Fragment() {
             Toast.makeText(mContext, "当前设备不支持OpenGL ES 2.0!", Toast.LENGTH_SHORT).show();
         }
     }
+
+    override fun getFragmentName(): String {
+        return ResourceUtils.getString(EFApplication.mAppContext , R.string.picture_process_fragment_name)
+    }
+
 
     fun initEffectList(rootView:View){
         effectList = EffectDataManager.getLocalEffectList(mContext , "effect_list.json")
