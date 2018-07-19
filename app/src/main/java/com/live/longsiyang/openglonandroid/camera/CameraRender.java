@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -195,6 +197,10 @@ public class CameraRender implements GLSurfaceView.Renderer {
             mSurfaceTexture.updateTexImage();
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, mPosCoordinate.length / 2);
         }
+    }
+
+    public void shockDrame(int duration){
+
     }
 
     private int createOESTextureObject() {
