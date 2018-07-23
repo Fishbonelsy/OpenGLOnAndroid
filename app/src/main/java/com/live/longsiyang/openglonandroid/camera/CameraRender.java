@@ -197,6 +197,34 @@ public class CameraRender implements GLSurfaceView.Renderer {
             mSurfaceTexture.updateTexImage();
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, mPosCoordinate.length / 2);
         }
+        // --- for test
+        FloatBuffer mPosBuffer = convertToFloatBuffer(mPosCoordinate);
+        FloatBuffer mTexBuffer;
+        if(camera_status == 0){
+            mTexBuffer = convertToFloatBuffer(mTexCoordinateBackRight);
+        }else{
+            mTexBuffer = convertToFloatBuffer(mTexCoordinateForntRight);
+        }
+
+        GLES20.glVertexAttribPointer(uPosHandle, 2, GLES20.GL_FLOAT, false, 0, mPosBuffer);
+        GLES20.glVertexAttribPointer(aTexHandle, 2, GLES20.GL_FLOAT, false, 0, mTexBuffer);
+
+        // 启用顶点位置的句柄
+        GLES20.glEnableVertexAttribArray(uPosHandle);
+        GLES20.glEnableVertexAttribArray(aTexHandle);
+        float[] colorTrans = new float[] {
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 0.5f
+        };
+        FloatBuffer mColorTransMatrixBuffer = convertFloatBuffer(colorTrans , 4);
+        GLES20.glUniformMatrix4fv(mColorTransMatrixHandler , 1  , false , mColorTransMatrixBuffer);
+        GLES20.glEnableVertexAttribArray(mColorTransMatrixHandler);
+        if (mSurfaceTexture != null) {
+            mSurfaceTexture.updateTexImage();
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, mPosCoordinate.length / 2);
+        }
     }
 
     public void shockDrame(int duration){
