@@ -27,9 +27,10 @@ public class CameraRender implements GLSurfaceView.Renderer {
             "attribute vec2 inputTextureCoordinate;\n" +
             "attribute vec4 position;            \n" +//NDK坐标点
             "varying   vec2 textureCoordinate; \n" +//纹理坐标点变换后输出
+            "uniform mat4 position_transform_matrix;\n" +
             "\n" +
             " void main() {\n" +
-            "     gl_Position = vec4(position.x,-position.y,position.z,position.w);\n" +
+            "     gl_Position = position_transform_matrix * vec4(position.x,-position.y,position.z,position.w);\n" +
             "     textureCoordinate = vec2(inputTextureCoordinate.x,inputTextureCoordinate.y);\n" +
             " }";
 
@@ -46,6 +47,7 @@ public class CameraRender implements GLSurfaceView.Renderer {
 //            "    gl_FragColor = vec4(tc.r,tc.g,tc.b,1.0);\n" +
             "}";
 
+    private int mPosTransMatrixHandler;
     private int mColorTransMatrixHandler ;
     private float[] mPosCoordinate = {-1, -1, -1, 1, 1, -1, 1, 1};
     private float[] mTexCoordinateBackRight = {1, 1, 0, 1, 1, 0, 0, 0};//顺时针转90并沿Y轴翻转  后摄像头正确，前摄像头上下颠倒
@@ -146,6 +148,15 @@ public class CameraRender implements GLSurfaceView.Renderer {
         FloatBuffer mColorTransMatrixBuffer = convertFloatBuffer(createColorTransVertices() , 4);
         GLES20.glUniformMatrix4fv(mColorTransMatrixHandler , 1  , false , mColorTransMatrixBuffer);
         GLES20.glEnableVertexAttribArray(mColorTransMatrixHandler);
+        float[] posTrans = new float[] {
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+        };
+        FloatBuffer mPosTransMatrixBuffer = convertFloatBuffer(posTrans , 4);
+        GLES20.glUniformMatrix4fv(mPosTransMatrixHandler , 1  , false , mPosTransMatrixBuffer);
+        GLES20.glEnableVertexAttribArray(mPosTransMatrixHandler);
     }
 
     private float[] createColorTransVertices(){
@@ -165,6 +176,7 @@ public class CameraRender implements GLSurfaceView.Renderer {
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         mSurfaceTexture = new SurfaceTexture(createOESTextureObject());
         creatProgram();
+        mPosTransMatrixHandler = GLES20.glGetUniformLocation(mProgram , "position_transform_matrix");
         mColorTransMatrixHandler = GLES20.glGetUniformLocation(mProgram , "color_transform_matrix");
 
 //            mProgram = ShaderUtils.createProgram(CameraGlSurfaceShowActivity.this, "vertex_texture.glsl", "fragment_texture.glsl");
@@ -221,6 +233,15 @@ public class CameraRender implements GLSurfaceView.Renderer {
         FloatBuffer mColorTransMatrixBuffer = convertFloatBuffer(colorTrans , 4);
         GLES20.glUniformMatrix4fv(mColorTransMatrixHandler , 1  , false , mColorTransMatrixBuffer);
         GLES20.glEnableVertexAttribArray(mColorTransMatrixHandler);
+        float[] posTrans = new float[] {
+                0.5f, 0, 0, 0,
+                0, 0.5f, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+        };
+        FloatBuffer mPosTransMatrixBuffer = convertFloatBuffer(posTrans , 4);
+        GLES20.glUniformMatrix4fv(mPosTransMatrixHandler , 1  , false , mPosTransMatrixBuffer);
+        GLES20.glEnableVertexAttribArray(mPosTransMatrixHandler);
         if (mSurfaceTexture != null) {
             mSurfaceTexture.updateTexImage();
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, mPosCoordinate.length / 2);
