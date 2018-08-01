@@ -61,6 +61,8 @@ class PreviewFragment : BaseFragment() {
                     override fun run() {
                         i++
                         LogUtils.d("glsurfaceview frame update i : $i")
+                        glRenderer.tempValue = i/20.0f;
+                        glRenderer.animing = true
                         glRenderer.setFilter(object :AbsFilter {
                             override fun getColorMatrix():FloatArray{
                                 var v1:Float = Math.random().toFloat()
@@ -73,7 +75,9 @@ class PreviewFragment : BaseFragment() {
                                         0f, 0f, 0f, i/10.0f)
                             }
                         })
-                        if (i == 100){
+                        if (i == 20){
+                            glRenderer.animing = false
+                            glRenderer.tempValue = 0.001f
                             glRenderer.setFilter(object :AbsFilter {
                                 override fun getColorMatrix():FloatArray{
                                     return floatArrayOf(
@@ -83,8 +87,10 @@ class PreviewFragment : BaseFragment() {
                                             0f, 0f, 0f, 1f)
                                 }
                             })
+
                             timer.cancel()
                         }
+
                     }
                 }, 0, 20)
 

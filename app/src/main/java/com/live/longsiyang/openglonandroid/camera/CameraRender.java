@@ -14,12 +14,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-
 public class CameraRender implements GLSurfaceView.Renderer {
 
     private int camera_status = 0;
@@ -42,7 +39,7 @@ public class CameraRender implements GLSurfaceView.Renderer {
             "\n" +
             "void main() {\n" +
             "    vec4 tc = texture2D(videoTex, textureCoordinate);\n" +
-            "    vec4 color = vec4(tc.r,tc.g,tc.b,1.0); \n"+
+            "    vec4 color = vec4(tc.r,tc.g,tc.b,tc.a); \n"+
             "    gl_FragColor = color_transform_matrix * color;\n" +
 //            "    gl_FragColor = vec4(tc.r,tc.g,tc.b,1.0);\n" +
             "}";
@@ -57,6 +54,9 @@ public class CameraRender implements GLSurfaceView.Renderer {
     private Camera mCamera;
     private SurfaceTexture.OnFrameAvailableListener mOnFrameAvailableListener;
     private AbsFilter mEffectFilter;
+
+    public float tempValue = 0;
+    public boolean animing = false;
 
     public int mProgram;
     public boolean mInited = false;
@@ -210,6 +210,9 @@ public class CameraRender implements GLSurfaceView.Renderer {
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, mPosCoordinate.length / 2);
         }
         // --- for test
+
+
+
         FloatBuffer mPosBuffer = convertToFloatBuffer(mPosCoordinate);
         FloatBuffer mTexBuffer;
         if(camera_status == 0){
@@ -225,23 +228,36 @@ public class CameraRender implements GLSurfaceView.Renderer {
         GLES20.glEnableVertexAttribArray(uPosHandle);
         GLES20.glEnableVertexAttribArray(aTexHandle);
         float[] colorTrans = new float[] {
-                1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 0.5f
+                1.0f, 0, 0, 0,
+                0, 1.0f, 0, 0,
+                0, 0, 1.0f, 0,
+                0, 0, 0, 0.5f*(1-tempValue/1.0f)
         };
+        // 半透明显示，需要开启
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
         FloatBuffer mColorTransMatrixBuffer = convertFloatBuffer(colorTrans , 4);
         GLES20.glUniformMatrix4fv(mColorTransMatrixHandler , 1  , false , mColorTransMatrixBuffer);
         GLES20.glEnableVertexAttribArray(mColorTransMatrixHandler);
         float[] posTrans = new float[] {
-                0.5f, 0, 0, 0,
-                0, 0.5f, 0, 0,
+                1.0f, 0, 0, 0,
+                0, 1.0f, 0, 0,
                 0, 0, 1, 0,
                 0, 0, 0, 1
         };
+        if (animing){
+            posTrans = new float[] {
+                    0.5f+tempValue, 0, 0, 0,
+                    0, 0.5f+tempValue, 0, 0,
+                    0, 0, 1, 0,
+                    0, 0, 0, 1
+            };
+        }
         FloatBuffer mPosTransMatrixBuffer = convertFloatBuffer(posTrans , 4);
         GLES20.glUniformMatrix4fv(mPosTransMatrixHandler , 1  , false , mPosTransMatrixBuffer);
         GLES20.glEnableVertexAttribArray(mPosTransMatrixHandler);
+
         if (mSurfaceTexture != null) {
             mSurfaceTexture.updateTexImage();
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, mPosCoordinate.length / 2);
