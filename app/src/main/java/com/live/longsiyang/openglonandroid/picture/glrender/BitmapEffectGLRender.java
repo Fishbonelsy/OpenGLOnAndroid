@@ -71,7 +71,19 @@ public class BitmapEffectGLRender implements AbsGLRender {
                     "uniform sampler2D tex_sampler;\n" +
                     "varying vec2 v_texcoord;\n" +
                     "void main() {\n" +
-                    "  gl_FragColor = texture2D(tex_sampler, v_texcoord);\n" +
+                    " vec3 sum = vec3(0.0);\n"+
+//                    " float step = 0.1f;\n"+
+//                    "   sum += texture2D(tex_sampler, v_texcoord-0.2f*step).rgb * 0.05;\n" +
+//                    "    sum += texture2D(tex_sampler, v_texcoord-0.15f*step).rgb * 0.09;\n" +
+//                    "    sum += texture2D(tex_sampler, v_texcoord-0.1f*step).rgb * 0.12;\n" +
+//                    "    sum += texture2D(tex_sampler, v_texcoord-0.05f*step).rgb * 0.15;\n" +
+//                    "    sum += texture2D(tex_sampler, v_texcoord).rgb * 0.18;\n" +
+//                    "    sum += texture2D(tex_sampler, v_texcoord+0.05f*step).rgb * 0.15;\n" +
+//                    "    sum += texture2D(tex_sampler, v_texcoord+0.1f*step).rgb * 0.12;\n" +
+//                    "    sum += texture2D(tex_sampler, v_texcoord+0.15f*step).rgb * 0.09;\n" +
+//                    "    sum += texture2D(tex_sampler, v_texcoord+0.2f*step).rgb * 0.05;\n" +
+                    "   sum = texture2D(tex_sampler, v_texcoord).rgb;\n"+
+                    "  gl_FragColor = vec4(sum, 1.0f);\n" +
                     "}\n";
 
     private static final float[] TEX_VERTICES = {

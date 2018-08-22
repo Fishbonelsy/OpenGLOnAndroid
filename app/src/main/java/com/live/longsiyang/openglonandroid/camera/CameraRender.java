@@ -39,9 +39,17 @@ public class CameraRender implements GLSurfaceView.Renderer {
             "\n" +
             "void main() {\n" +
             "    vec4 tc = texture2D(videoTex, textureCoordinate);\n" +
-            "    vec4 color = vec4(tc.r,tc.g,tc.b,tc.a); \n"+
+            " vec3 sum = vec3(0.0);\n"+
+            " float step = 0.9f;\n"+
+            "   sum += texture2D(videoTex, textureCoordinate-0.2f*step).rgb * 0.05;\n" +
+            "    sum += texture2D(videoTex, textureCoordinate-0.1f*step).rgb * 0.15;\n" +
+            "    sum += texture2D(videoTex, textureCoordinate).rgb * 0.6;\n" +
+            "    sum += texture2D(videoTex, textureCoordinate+0.1f*step).rgb * 0.15;\n" +
+            "    sum += texture2D(videoTex, textureCoordinate+0.2f*step).rgb * 0.05;\n" +
+//            "   sum = texture2D(videoTex, textureCoordinate).rgb;\n"+
+            "   vec4 color  = vec4(sum, 1.0f);\n" +
             "    gl_FragColor = color_transform_matrix * color;\n" +
-//            "    gl_FragColor = vec4(tc.r,tc.g,tc.b,1.0);\n" +
+//            "    gl_FragColor = texture2D(videoTex, textureCoordinate);\n" +
             "}";
 
     private int mPosTransMatrixHandler;
@@ -55,7 +63,7 @@ public class CameraRender implements GLSurfaceView.Renderer {
     private SurfaceTexture.OnFrameAvailableListener mOnFrameAvailableListener;
     private AbsFilter mEffectFilter;
 
-    public float tempValue = 0;
+    public float animValue = 0;
     public boolean animing = false;
 
     public int mProgram;
@@ -209,9 +217,12 @@ public class CameraRender implements GLSurfaceView.Renderer {
             mSurfaceTexture.updateTexImage();
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, mPosCoordinate.length / 2);
         }
-        // --- for test
 
+        renderEffect();
+    }
 
+    private void renderEffect(){
+        // --- for click effect
 
         FloatBuffer mPosBuffer = convertToFloatBuffer(mPosCoordinate);
         FloatBuffer mTexBuffer;
@@ -231,7 +242,7 @@ public class CameraRender implements GLSurfaceView.Renderer {
                 1.0f, 0, 0, 0,
                 0, 1.0f, 0, 0,
                 0, 0, 1.0f, 0,
-                0, 0, 0, 0.5f*(1-tempValue/1.0f)
+                0, 0, 0, 0.5f*(1- animValue /1.0f)
         };
         // 半透明显示，需要开启
         GLES20.glEnable(GLES20.GL_BLEND);
@@ -248,8 +259,8 @@ public class CameraRender implements GLSurfaceView.Renderer {
         };
         if (animing){
             posTrans = new float[] {
-                    0.5f+tempValue, 0, 0, 0,
-                    0, 0.5f+tempValue, 0, 0,
+                    0.5f+ animValue, 0, 0, 0,
+                    0, 0.5f+ animValue, 0, 0,
                     0, 0, 1, 0,
                     0, 0, 0, 1
             };

@@ -1,6 +1,5 @@
 package com.live.longsiyang.openglonandroid.camera
 
-import android.app.Fragment
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.opengl.GLSurfaceView
@@ -18,7 +17,6 @@ import com.live.longsiyang.openglonandroid.camera.filter.AbsFilter
 import com.live.longsiyang.openglonandroid.utils.GLUtils
 import com.live.longsiyang.openglonandroid.utils.LogUtils
 import com.live.longsiyang.openglonandroid.utils.ResourceUtils
-import com.live.longsiyang.openglonandroid.utils.ToastUtils
 import kotlinx.android.synthetic.main.gl_preview_fragment_layout.view.*
 import java.util.*
 
@@ -61,7 +59,7 @@ class PreviewFragment : BaseFragment() {
                     override fun run() {
                         i++
                         LogUtils.d("glsurfaceview frame update i : $i")
-                        glRenderer.tempValue = i/20.0f;
+                        glRenderer.animValue = i/20.0f;
                         glRenderer.animing = true
                         glRenderer.setFilter(object :AbsFilter {
                             override fun getColorMatrix():FloatArray{
@@ -72,12 +70,12 @@ class PreviewFragment : BaseFragment() {
                                         v1, 0f, 0f, 0f,
                                         0f, v2, 0f, 0f,
                                         0f, 0f, v3, 0f,
-                                        0f, 0f, 0f, i/10.0f)
+                                        0f, 0f, 0f, i/20.0f)
                             }
                         })
                         if (i == 20){
                             glRenderer.animing = false
-                            glRenderer.tempValue = 0.001f
+                            glRenderer.animValue = 0.001f
                             glRenderer.setFilter(object :AbsFilter {
                                 override fun getColorMatrix():FloatArray{
                                     return floatArrayOf(
